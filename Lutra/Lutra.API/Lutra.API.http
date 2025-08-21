@@ -1,0 +1,6 @@
+@Lutra.API_HostAddress = http://localhost:5037
+
+GET {{Lutra.API_HostAddress}}
+Accept: application/json
+
+###
