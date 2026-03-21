@@ -6,6 +6,6 @@ namespace Lutra.Application.Models.Verspakketten
     {
         public required string Name { get; init; }
         public required string Rating { get; init; }
-        public Supermarkt Supermarkt { get; init; }
+        public Supermarkt? Supermarkt { get; init; }
     }
 }

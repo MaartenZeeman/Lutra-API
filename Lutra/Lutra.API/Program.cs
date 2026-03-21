@@ -11,7 +11,6 @@ namespace Lutra.API
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddCortexMediator(
-                configuration: builder.Configuration,
                 handlerAssemblyMarkerTypes: [typeof(Program), typeof(GetVerspakketten)],
                 options => options.AddDefaultBehaviors()
             );
