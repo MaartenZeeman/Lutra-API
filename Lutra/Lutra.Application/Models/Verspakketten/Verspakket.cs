@@ -4,8 +4,9 @@ namespace Lutra.Application.Models.Verspakketten
 {
     public record Verspakket
     {
-        public required string Name { get; init; }
-        public required string Rating { get; init; }
+        public required string Naam { get; init; }
+        public int? PrijsInCenten { get; init; }
+        public Beoordeling[]? Beoordelingen { get; init; }
         public Supermarkt? Supermarkt { get; init; }
     }
 }
