@@ -4,14 +4,21 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lutra.Infrastructure.Sql;
 
-public class LutraDbContext : ILutraDbContext
+public class LutraDbContext : DbContext, ILutraDbContext
 {
-    public DbSet<Supermarkt> Supermarkten => throw new NotImplementedException();
-
-    public DbSet<Verspakket> Verspaketten => throw new NotImplementedException();
-
-    public Task<int> SaveChangesAsync(CancellationToken cancellationToken)
+    public LutraDbContext(DbContextOptions<LutraDbContext> options)
+        : base(options)
     {
-        throw new NotImplementedException();
+    }
+
+    public DbSet<Supermarkt> Supermarkten => Set<Supermarkt>();
+
+    public DbSet<Verspakket> Verspaketten => Set<Verspakket>();
+
+    public DbSet<Beoordeling> Beoordelingen => Set<Beoordeling>();
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        return base.SaveChangesAsync(cancellationToken);
     }
 }

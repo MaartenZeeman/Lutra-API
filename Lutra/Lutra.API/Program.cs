@@ -1,6 +1,9 @@
 
 using Cortex.Mediator.DependencyInjection;
 using Lutra.Application.Verspakketten;
+using Lutra.Application.Interfaces;
+using Lutra.Infrastructure.Sql;
+using Microsoft.EntityFrameworkCore;
 
 namespace Lutra.API
 {
@@ -14,6 +17,9 @@ namespace Lutra.API
                 handlerAssemblyMarkerTypes: [typeof(Program), typeof(GetVerspakketten)],
                 options => options.AddDefaultBehaviors()
             );
+
+            builder.Services.AddDbContext<ILutraDbContext, LutraDbContext>(options =>
+                options.UseNpgsql(builder.Configuration.GetConnectionString("LutraDb")));
 
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
