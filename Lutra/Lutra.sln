@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lutra.Infrastructure.Sql", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lutra.AppHost", "Lutra.AppHost\Lutra.AppHost.csproj", "{B9B41350-EB18-4564-81AB-C16F3E5A0CBB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lutra.Infrastructure.Migrator", "Lutra.Infrastructure.Migrator\Lutra.Infrastructure.Migrator.csproj", "{6582486C-CEB7-78BF-D043-E0C3C0D6A923}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{B9B41350-EB18-4564-81AB-C16F3E5A0CBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B9B41350-EB18-4564-81AB-C16F3E5A0CBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B9B41350-EB18-4564-81AB-C16F3E5A0CBB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6582486C-CEB7-78BF-D043-E0C3C0D6A923}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6582486C-CEB7-78BF-D043-E0C3C0D6A923}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6582486C-CEB7-78BF-D043-E0C3C0D6A923}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6582486C-CEB7-78BF-D043-E0C3C0D6A923}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
