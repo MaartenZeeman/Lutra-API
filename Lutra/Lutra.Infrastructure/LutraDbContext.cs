@@ -15,7 +15,19 @@ public class LutraDbContext : DbContext, ILutraDbContext
 
     public DbSet<Verspakket> Verspaketten => Set<Verspakket>();
 
-    public DbSet<Beoordeling> Beoordelingen => Set<Beoordeling>();
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<Beoordeling>()
+            .ToTable("Beoordelingen");
+
+        modelBuilder.Entity<Verspakket>()
+            .HasMany(v => v.Beoordelingen)
+            .WithOne()
+            .HasForeignKey(b => b.VerspakketId)
+            .IsRequired();
+    }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

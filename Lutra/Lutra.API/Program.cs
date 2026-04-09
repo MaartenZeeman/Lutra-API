@@ -4,6 +4,7 @@ using Lutra.Application.Verspakketten;
 using Lutra.Application.Interfaces;
 using Lutra.Infrastructure.Sql;
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 
 namespace Lutra.API
 {
@@ -22,16 +23,16 @@ namespace Lutra.API
                 options.UseNpgsql(builder.Configuration.GetConnectionString("LutraDb")));
 
             builder.Services.AddControllers();
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
 
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
+                app.MapScalarApiReference();
+                app.MapGet("/", () => Results.Redirect("/scalar/v1")).ExcludeFromDescription();
             }
 
             app.UseHttpsRedirection();

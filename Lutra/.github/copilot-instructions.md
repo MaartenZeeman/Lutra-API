@@ -102,3 +102,16 @@ Add FluentValidation, AutoMapper, NUnit, Shouldly, Moq, or Respawn only if the r
 - Reuse existing patterns from the repo instead of inventing new ones.
 - Run or request a build/test verification after changes when appropriate.
 - Avoid broad refactors unless the user asks for them.
+
+## Available agents
+
+Specialist agents for common tasks are in `.github/agents/`. Invoke them when the task matches:
+
+| Agent file | When to use |
+|---|---|
+| `csharp-expert.agent.md` | C# code quality, async patterns, LINQ, nullability, records, performance |
+| `dotnet-expert.agent.md` | .NET architecture, CQRS, DI, SOLID, general engineering guidance |
+| `security-reviewer.agent.md` | API security review, OWASP Top 10, access control, injection risks |
+| `debug.agent.md` | Diagnosing and fixing bugs systematically |
+| `postgresql-dba.agent.md` | PostgreSQL queries, schema, migrations, performance |
+| `test-generator.agent.md` | Generating unit, integration, or functional tests for any layer |
