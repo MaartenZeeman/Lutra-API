@@ -1,4 +1,4 @@
-﻿using Cortex.Mediator.Queries;
+using Cortex.Mediator.Queries;
 
 namespace Lutra.Application.Verspakketten
 {

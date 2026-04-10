@@ -1,14 +1,25 @@
 using Cortex.Mediator.Queries;
+using Lutra.Application.Interfaces;
+using Lutra.Application.Models.Supermarkten;
+using Microsoft.EntityFrameworkCore;
 
 namespace Lutra.Application.Supermarkten
 {
     public sealed partial class GetSupermarkten
     {
-        public sealed class Handler : IQueryHandler<Query, Response>
+        public sealed class Handler(ILutraDbContext context) : IQueryHandler<Query, Response>
         {
             public async Task<Response> Handle(Query request, CancellationToken cancellationToken)
             {
-                return new Response { Supermarkten = [] };
+                var supermarkten = await context.Supermarkten
+                    .AsNoTracking()
+                    .OrderBy(s => s.Naam)
+                    .Skip(request.Skip)
+                    .Take(request.Take)
+                    .Select(s => new Supermarkt { Naam = s.Naam })
+                    .ToListAsync(cancellationToken);
+
+                return new Response { Supermarkten = supermarkten };
             }
         }
     }

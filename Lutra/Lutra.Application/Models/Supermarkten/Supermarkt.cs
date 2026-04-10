@@ -2,6 +2,6 @@
 {
     public record Supermarkt
     {
-        public required string Name { get; init; }
+        public required string Naam { get; init; }
     }
 }
