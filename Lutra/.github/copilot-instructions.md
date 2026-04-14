@@ -80,7 +80,7 @@ Add FluentValidation, AutoMapper, NUnit, Shouldly, Moq, or Respawn only if the r
 
 ## Naming and code style
 
-- Match the existing language of the codebase; this project uses Dutch domain names in places such as `Verspakketten`, `Supermarkt`, and `Beoordeling`.
+- Use English for general code names (variables, method names, namespaces, folders) and use Dutch only for domain-specific enums, types, and files that reflect business concepts (e.g., `Verspakketten`, `Supermarkt`, `Beoordeling`).
 - Keep class and file names consistent with the feature name.
 - Use sealed types where the project already does.
 - Prefer explicit `required` members where the current codebase uses them.

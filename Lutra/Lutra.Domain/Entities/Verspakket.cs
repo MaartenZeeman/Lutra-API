@@ -9,6 +9,8 @@ public class Verspakket : BaseEntity
     [MaxLength(50)]
     public required string Naam { get; set; }
 
+    public int? PrijsInCenten { get; set; }
+
     [Range(1, 10)]
     public int AantalPersonen { get; set; }
 
