@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Lutra.API.Controllers
 {
     /// <summary>
-    /// Provides read-only access to verspakket resources.
+    /// Provides access to verspakket resources.
     /// </summary>
     [ApiController]
     [Route("api/verspakketten")]
@@ -49,6 +49,28 @@ namespace Lutra.API.Controllers
             }
 
             return Ok(result);
+        }
+
+        /// <summary>
+        /// Creates a new verspakket.
+        /// </summary>
+        /// <param name="command">The verspakket values to create.</param>
+        /// <returns>Returns 201 Created with the created verspakket identifier.</returns>
+        [HttpPost]
+        [ProducesResponseType(typeof(CreateVerspakket.Response), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<CreateVerspakket.Response>> Post([FromBody] CreateVerspakket.Command command)
+        {
+            try
+            {
+                var result = await mediator.SendCommandAsync<CreateVerspakket.Command, CreateVerspakket.Response>(command);
+
+                return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

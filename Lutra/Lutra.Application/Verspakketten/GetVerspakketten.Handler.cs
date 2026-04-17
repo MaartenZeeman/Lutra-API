@@ -12,7 +12,9 @@ namespace Lutra.Application.Verspakketten
         {
             public async Task<Response> Handle(Query request, CancellationToken cancellationToken)
             {
-                var query = context.Verspaketten.AsNoTracking();
+                var query = context.Verspaketten
+                    .Where(w => w.DeletedAt == null)
+                    .AsNoTracking();
 
                 // Apply sort before pagination so the database handles ordering efficiently.
                 IOrderedQueryable<Domain.Entities.Verspakket> sorted = request.SortField switch
@@ -40,6 +42,7 @@ namespace Lutra.Application.Verspakketten
                     .Take(request.Take)
                     .Select(v => new Verspakket
                     {
+                        Id = v.Id,
                         Naam = v.Naam,
                         PrijsInCenten = v.PrijsInCenten,
                         Beoordelingen = v.Beoordelingen
@@ -53,6 +56,7 @@ namespace Lutra.Application.Verspakketten
                             .ToArray(),
                         Supermarkt = new Supermarkt
                         {
+                            Id = v.Supermarkt.Id,
                             Naam = v.Supermarkt.Naam
                         }
                     })

@@ -16,7 +16,7 @@ public class Verspakket : BaseEntity
 
     public required Guid SupermarktId { get; set; }
 
-    public required virtual Supermarkt Supermarkt { get; set; }
+    public virtual Supermarkt Supermarkt { get; set; } = null!;
 
     public IReadOnlyCollection<Beoordeling> Beoordelingen => _beoordelingen.AsReadOnly();
 

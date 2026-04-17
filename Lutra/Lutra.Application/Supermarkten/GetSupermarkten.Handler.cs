@@ -13,10 +13,15 @@ namespace Lutra.Application.Supermarkten
             {
                 var supermarkten = await context.Supermarkten
                     .AsNoTracking()
+                    .Where(w => w.DeletedAt == null)
                     .OrderBy(s => s.Naam)
                     .Skip(request.Skip)
                     .Take(request.Take)
-                    .Select(s => new Supermarkt { Naam = s.Naam })
+                    .Select(s => new Supermarkt 
+                    { 
+                        Id = s.Id,
+                        Naam = s.Naam
+                    })
                     .ToListAsync(cancellationToken);
 
                 return new Response { Supermarkten = supermarkten };

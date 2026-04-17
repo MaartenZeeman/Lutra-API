@@ -17,6 +17,7 @@ namespace Lutra.Application.Verspakketten
                     .Where(v => v.Id == request.Id)
                     .Select(v => new Verspakket
                     {
+                        Id = v.Id,
                         Naam = v.Naam,
                         PrijsInCenten = v.PrijsInCenten,
                         Beoordelingen = v.Beoordelingen
@@ -30,6 +31,7 @@ namespace Lutra.Application.Verspakketten
                             .ToArray(),
                         Supermarkt = new Supermarkt
                         {
+                            Id = v.Supermarkt.Id,
                             Naam = v.Supermarkt.Naam
                         }
                     })
