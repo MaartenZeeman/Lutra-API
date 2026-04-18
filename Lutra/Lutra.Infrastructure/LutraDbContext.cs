@@ -13,6 +13,8 @@ public class LutraDbContext : DbContext, ILutraDbContext
 
     public DbSet<Supermarkt> Supermarkten => Set<Supermarkt>();
 
+    public DbSet<Beoordeling> Beoordelingen => Set<Beoordeling>();
+
     public DbSet<Verspakket> Verspaketten => Set<Verspakket>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -22,11 +24,19 @@ public class LutraDbContext : DbContext, ILutraDbContext
         modelBuilder.Entity<Beoordeling>()
             .ToTable("Beoordelingen");
 
-        modelBuilder.Entity<Verspakket>()
-            .HasMany(v => v.Beoordelingen)
-            .WithOne()
-            .HasForeignKey(b => b.VerspakketId)
-            .IsRequired();
+        modelBuilder.Entity<Verspakket>(b =>
+        {
+            b.HasMany(v => v.Beoordelingen)
+                .WithOne()
+                .HasForeignKey(beo => beo.VerspakketId)
+                .IsRequired();
+
+            b.ToTable(t =>
+            {
+                t.HasCheckConstraint("CK_Verspaketten_AantalPersonen", "\"AantalPersonen\" BETWEEN 1 AND 10");
+                t.HasCheckConstraint("CK_Verspaketten_PrijsInCenten", "\"PrijsInCenten\" IS NULL OR \"PrijsInCenten\" >= 0");
+            });
+        });
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

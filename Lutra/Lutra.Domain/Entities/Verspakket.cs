@@ -9,6 +9,7 @@ public class Verspakket : BaseEntity
     [MaxLength(50)]
     public required string Naam { get; set; }
 
+    [Range(0, int.MaxValue)]
     public int? PrijsInCenten { get; set; }
 
     [Range(1, 10)]

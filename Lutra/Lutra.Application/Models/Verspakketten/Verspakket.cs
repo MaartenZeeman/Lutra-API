@@ -10,6 +10,12 @@ namespace Lutra.Application.Models.Verspakketten
 
         public int? PrijsInCenten { get; init; }
 
+        public int AantalPersonen { get; init; }
+
+    public double? AverageCijferSmaak { get; init; }
+
+    public double? AverageCijferBereiden { get; init; }
+
         public Beoordeling[]? Beoordelingen { get; init; }
 
         public Supermarkt? Supermarkt { get; init; }

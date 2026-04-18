@@ -1,4 +1,5 @@
 using Cortex.Mediator;
+using Lutra.API.Requests;
 using Lutra.Application.Verspakketten;
 using Microsoft.AspNetCore.Mvc;
 
@@ -66,6 +67,49 @@ namespace Lutra.API.Controllers
                 var result = await mediator.SendCommandAsync<CreateVerspakket.Command, CreateVerspakket.Response>(command);
 
                 return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Updates an existing verspakket with the provided values.
+        /// </summary>
+        /// <param name="id">The verspakket identifier.</param>
+        /// <param name="request">The updated verspakket values.</param>
+        /// <returns>
+        /// Returns 204 No Content when the update succeeds.
+        /// Returns 404 Not Found when the specified verspakket does not exist.
+        /// </returns>
+        [HttpPut("{id:guid}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateVerspakketRequest request)
+        {
+            var command = new UpdateVerspakket.Command(id, request.Naam, request.PrijsInCenten, request.AantalPersonen, request.SupermarktId);
+            await mediator.SendCommandAsync<UpdateVerspakket.Command, UpdateVerspakket.Response>(command);
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Adds a beoordeling to an existing verspakket.
+        /// </summary>
+        /// <param name="id">The verspakket ID.</param>
+        /// <param name="request">The beoordeling values to add.</param>
+        /// <returns>Returns 201 Created with the created beoordeling identifier.</returns>
+        [HttpPost("{id:guid}/beoordelingen")]
+        [ProducesResponseType(typeof(AddBeoordeling.Response), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<AddBeoordeling.Response>> AddBeoordeling(Guid id, [FromBody] AddBeoordelingRequest request)
+        {
+            try
+            {
+                var command = new AddBeoordeling.Command(id, request.CijferSmaak, request.CijferBereiden, request.Aanbevolen, request.Tekst);
+                var result = await mediator.SendCommandAsync<AddBeoordeling.Command, AddBeoordeling.Response>(command);
+
+                return CreatedAtAction(nameof(GetById), new { id }, result);
             }
             catch (InvalidOperationException ex)
             {

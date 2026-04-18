@@ -20,6 +20,9 @@ namespace Lutra.Application.Verspakketten
                         Id = v.Id,
                         Naam = v.Naam,
                         PrijsInCenten = v.PrijsInCenten,
+                        AantalPersonen = v.AantalPersonen,
+                        AverageCijferSmaak = v.Beoordelingen.Any() ? v.Beoordelingen.Average(b => (double)b.CijferSmaak) : null,
+                        AverageCijferBereiden = v.Beoordelingen.Any() ? v.Beoordelingen.Average(b => (double)b.CijferBereiden) : null,
                         Beoordelingen = v.Beoordelingen
                             .Select(b => new Beoordeling
                             {
