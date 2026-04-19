@@ -85,12 +85,28 @@ namespace Lutra.API.Controllers
         /// </returns>
         [HttpPut("{id:guid}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateVerspakketRequest request)
         {
-            var command = new UpdateVerspakket.Command(id, request.Naam, request.PrijsInCenten, request.AantalPersonen, request.SupermarktId);
-            await mediator.SendCommandAsync<UpdateVerspakket.Command, UpdateVerspakket.Response>(command);
-            return NoContent();
+            try
+            {
+                var command = new UpdateVerspakket.Command(id, request.Naam, request.PrijsInCenten, request.AantalPersonen, request.SupermarktId);
+                await mediator.SendCommandAsync<UpdateVerspakket.Command, UpdateVerspakket.Response>(command);
+                return NoContent();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (InvalidOperationException ex) when (ex.Message.StartsWith($"Verspakket with id '{id}'"))
+            {
+                return NotFound();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         /// <summary>
