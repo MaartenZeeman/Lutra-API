@@ -6,6 +6,8 @@ public interface ILutraDbContext
 {
     DbSet<Supermarkt> Supermarkten { get; }
 
+    DbSet<Beoordeling> Beoordelingen { get; }
+
     DbSet<Verspakket> Verspaketten { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);

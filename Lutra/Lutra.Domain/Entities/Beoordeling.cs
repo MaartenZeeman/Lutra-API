@@ -14,4 +14,6 @@ public class Beoordeling : BaseEntity
 
     [MaxLength(1024)]
     public string? Tekst { get; set; }
+
+    public required Guid VerspakketId { get; set; }
 }

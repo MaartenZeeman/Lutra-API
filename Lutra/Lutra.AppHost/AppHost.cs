@@ -1,13 +1,19 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var sql = builder.AddSqlServer("sql")
-                 .WithLifetime(ContainerLifetime.Persistent);
+var postgres = builder.AddPostgres("postgres")
+    .WithDataVolume()
+    .WithLifetime(ContainerLifetime.Persistent);
 
-var db = sql.AddDatabase("database", "Lutra");
+var db = postgres
+    .AddDatabase("LutraDb");
+
+var migrator = builder.AddProject<Projects.Lutra_Infrastructure_Migrator>("dbmigrator")
+    .WithReference(db)
+    .WaitFor(db);
 
 var apiService = builder.AddProject<Projects.Lutra_API>("apiservice")
     .WithHttpHealthCheck("/health")
     .WithReference(db)
-    .WaitFor(db);
+    .WaitForCompletion(migrator);
 
 builder.Build().Run();
