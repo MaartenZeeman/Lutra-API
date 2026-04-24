@@ -1,5 +1,6 @@
 using Cortex.Mediator.Commands;
 using Lutra.Application.Interfaces;
+using Lutra.Application.Models.Verspakketten;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lutra.Application.Verspakketten;
@@ -30,6 +31,21 @@ public sealed partial class CreateVerspakket
                 CreatedAt = now,
                 ModifiedAt = now
             };
+
+            if (request.Beoordeling is not null)
+            {
+                verspakket.AddBeoordeling(new Domain.Entities.Beoordeling
+                {
+                    Id = Guid.NewGuid(),
+                    CijferSmaak = request.Beoordeling.CijferSmaak,
+                    CijferBereiden = request.Beoordeling.CijferBereiden,
+                    Aanbevolen = request.Beoordeling.Aanbevolen,
+                    Tekst = request.Beoordeling.Tekst,
+                    VerspakketId = verspakket.Id,
+                    CreatedAt = now,
+                    ModifiedAt = now
+                });
+            }
 
             await context.Verspaketten.AddAsync(verspakket, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);

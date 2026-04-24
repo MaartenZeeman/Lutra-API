@@ -1,6 +1,5 @@
 using Cortex.Mediator;
 using Lutra.Application.Supermarkten;
-using Lutra.Application.Verspakketten;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Lutra.API.Controllers;

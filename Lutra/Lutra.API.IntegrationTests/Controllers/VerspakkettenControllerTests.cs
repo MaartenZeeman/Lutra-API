@@ -91,7 +91,7 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
             CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
         });
 
-        var command = new CreateVerspakket.Command("Herfst Pakket", 1499, 3, supermarkt.Id);
+        var command = new CreateVerspakket.Command("Herfst Pakket", 1499, 3, supermarkt.Id, null);
         var response = await Client.PostAsJsonAsync("/api/verspakketten", command);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
@@ -101,9 +101,42 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
     }
 
     [Fact]
+    public async Task Post_CreatesVerspakket_WithBeoordeling_AndReturns201()
+    {
+        var supermarkt = await SeedAsync(new Supermarkt
+        {
+            Id = Guid.NewGuid(), Naam = "Picnic",
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        });
+
+        var command = new CreateVerspakket.Command(
+            "Herfst Pakket",
+            1499,
+            3,
+            supermarkt.Id,
+            new Lutra.Application.Models.Verspakketten.Beoordeling
+            {
+                CijferSmaak = 9,
+                CijferBereiden = 8,
+                Aanbevolen = true,
+                Tekst = "Heel goed"
+            });
+
+        var response = await Client.PostAsJsonAsync("/api/verspakketten", command);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var body = await response.Content.ReadFromJsonAsync<CreateVerspakket.Response>();
+        body!.Id.Should().NotBeEmpty();
+
+        var created = await Client.GetFromJsonAsync<GetVerspakket.Response>($"/api/verspakketten/{body.Id}");
+        created!.Verspakket.Beoordelingen.Should().ContainSingle();
+        created.Verspakket.Beoordelingen!.Single().CijferSmaak.Should().Be(9);
+    }
+
+    [Fact]
     public async Task Post_ReturnsBadRequest_WhenSupermarktDoesNotExist()
     {
-        var command = new CreateVerspakket.Command("Winter Pakket", 999, 2, Guid.NewGuid());
+        var command = new CreateVerspakket.Command("Winter Pakket", 999, 2, Guid.NewGuid(), null);
         var response = await Client.PostAsJsonAsync("/api/verspakketten", command);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
