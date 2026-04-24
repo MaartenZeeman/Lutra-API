@@ -1,4 +1,5 @@
 using Cortex.Mediator.Commands;
+using Lutra.Application.Models.Verspakketten;
 using System.ComponentModel.DataAnnotations;
 
 namespace Lutra.Application.Verspakketten;
@@ -9,5 +10,6 @@ public sealed partial class CreateVerspakket
         string Naam,
         int? PrijsInCenten,
         [Range(1, 10)] int AantalPersonen,
-        Guid SupermarktId) : ICommand<Response>;
+        Guid SupermarktId,
+        Beoordeling? Beoordeling) : ICommand<Response>;
 }

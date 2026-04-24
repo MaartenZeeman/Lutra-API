@@ -1,4 +1,4 @@
-# Copilot Instructions for Lutra
+﻿# Copilot Instructions for Lutra
 
 Use these standards when generating or modifying code in this repository.
 
@@ -13,6 +13,8 @@ Use these standards when generating or modifying code in this repository.
   - `Lutra.API`
   - `Lutra.AppHost`
   - `Lutra.Infrastructure.Migrator`
+  - `Lutra.Application.UnitTests` â€” xUnit unit tests for Application handlers
+  - integration tests for API behavior (`Lutra.API.IntegrationTests`)
 - Database: PostgreSQL via EF Core
 - Orchestration: .NET Aspire
 - Messaging pattern: `Cortex.Mediator` for CQRS handling
@@ -31,10 +33,11 @@ Use these standards when generating or modifying code in this repository.
 
 ## Clean Architecture guidance
 
-Use Jason Taylor’s CleanArchitecture project as a reference for intent and structure, but adapt to this codebase’s actual implementation.
+Use Jason Taylorâ€™s CleanArchitecture project as a reference for intent and structure, but adapt to this codebaseâ€™s actual implementation.
 
 Where the reference template uses MediatR, this project uses `Cortex.Mediator`.
-Add FluentValidation, AutoMapper, NUnit, Shouldly, Moq, or Respawn only if the repository already uses them or the change clearly requires them.
+The established test stack is **xUnit** with **FluentAssertions** â€” both are already in use and should be used for all new tests.
+Add FluentValidation, AutoMapper, Shouldly, Moq, or Respawn only if the repository already uses them or the change clearly requires them.
 
 ## Domain layer rules
 
@@ -57,6 +60,7 @@ Add FluentValidation, AutoMapper, NUnit, Shouldly, Moq, or Respawn only if the r
 - Use `Cortex.Mediator` request and handler interfaces.
 - Keep handlers focused on orchestration and application logic.
 - Use `ILutraDbContext` rather than referencing the concrete DbContext directly when possible.
+- Shared model types (DTOs, enums) that are not use-case-specific live in `Models/<FeatureArea>/` (e.g., `Models/Verspakketten/`, `Models/Supermarkten/`).
 
 ## Infrastructure rules
 
@@ -89,10 +93,12 @@ Add FluentValidation, AutoMapper, NUnit, Shouldly, Moq, or Respawn only if the r
 ## Testing guidance
 
 - If tests exist, update or add tests alongside behavior changes.
-- Follow the reference template’s intent for test coverage:
-  - unit tests for business logic
-  - integration tests for infrastructure and data access
-  - functional tests for API behavior
+- Follow the reference template's intent for test coverage:
+  - unit tests for business logic (`Lutra.Application.UnitTests`)
+  - integration tests for API behavior (`Lutra.API.IntegrationTests`)
+- Test framework: **xUnit** (`xunit` v2 + `xunit.runner.visualstudio`).
+- Assertions: **FluentAssertions**.
+- Integration tests use **SQLite** (via `Microsoft.EntityFrameworkCore.Sqlite`) as the in-process test database -- not PostgreSQL. Use `LutraApiFactory` and `IntegrationTestBase` as the base infrastructure.
 - Keep tests readable and focused on behavior.
 
 ## When making changes

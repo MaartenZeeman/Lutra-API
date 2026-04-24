@@ -14,6 +14,22 @@ namespace Lutra.API
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowLocalDevelopment", policy =>
+                    policy.SetIsOriginAllowed(origin =>
+                    {
+                        if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                        {
+                            return false;
+                        }
+
+                        return uri.Host is "localhost" or "127.0.0.1" or "[::1]";
+                    })
+                    .AllowAnyHeader()
+                    .AllowAnyMethod());
+            });
+
             builder.Services.AddCortexMediator(
                 handlerAssemblyMarkerTypes: [typeof(Program), typeof(GetVerspakketten)],
                 options => options.AddDefaultBehaviors()
@@ -36,6 +52,8 @@ namespace Lutra.API
             }
 
             app.UseHttpsRedirection();
+
+            app.UseCors("AllowLocalDevelopment");
 
             app.UseAuthorization();
 
