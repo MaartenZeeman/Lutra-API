@@ -47,6 +47,22 @@ public sealed partial class CreateVerspakket
                 });
             }
 
+            if (request.Fotos is { Count: > 0 })
+            {
+                foreach (var foto in request.Fotos)
+                {
+                    verspakket.AddFoto(new Domain.Entities.VerspakketFoto
+                    {
+                        Id = Guid.NewGuid(),
+                        Data = Convert.FromBase64String(foto.Base64Data),
+                        IsMainImage = foto.IsMainImage,
+                        VerspakketId = verspakket.Id,
+                        CreatedAt = now,
+                        ModifiedAt = now
+                    });
+                }
+            }
+
             await context.Verspaketten.AddAsync(verspakket, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
 

@@ -20,14 +20,14 @@ public abstract class IntegrationTestBase : IClassFixture<LutraApiFactory>, IAsy
     }
 
     /// <summary>Seed data or perform setup before each test.</summary>
-    public virtual Task InitializeAsync()
+    public virtual ValueTask InitializeAsync()
     {
         Factory.EnsureSchemaCreated();
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     /// <summary>Reset database state after each test.</summary>
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         using var scope = Factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ILutraDbContext>() as LutraDbContext;
@@ -37,10 +37,10 @@ public abstract class IntegrationTestBase : IClassFixture<LutraApiFactory>, IAsy
             db.Verspaketten.RemoveRange(db.Verspaketten);
             db.Supermarkten.RemoveRange(db.Supermarkten);
             await db.SaveChangesAsync(CancellationToken.None);
-        }
+        }   
     }
 
-    protected async Task<T> SeedAsync<T>(T entity) where T : class
+    protected async ValueTask<T> SeedAsync<T>(T entity) where T : class
     {
         using var scope = Factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ILutraDbContext>() as LutraDbContext;

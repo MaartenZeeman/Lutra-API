@@ -1,12 +1,11 @@
 using Lutra.Application.Models.Verspakketten;
 
-namespace Lutra.Application.Verspakketten
+namespace Lutra.Application.Verspakketten;
+
+public sealed partial class GetVerspakket
 {
-    public sealed partial class GetVerspakket
+    public sealed record Response
     {
-        public sealed class Response
-        {
-            public required Verspakket Verspakket { get; set; }
-        }
+        public required Verspakket Verspakket { get; init; }
     }
 }

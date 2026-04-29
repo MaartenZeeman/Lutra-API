@@ -1,8 +1,8 @@
-﻿using Lutra.Application.Models.Supermarkten;
+using Lutra.Application.Models.Supermarkten;
 
 namespace Lutra.Application.Models.Verspakketten;
 
-public record Verspakket
+public record VerspakketSummary
 {
     public required Guid Id { get; init; }
 
@@ -16,9 +16,7 @@ public record Verspakket
 
     public double? AverageCijferBereiden { get; init; }
 
-    public Beoordeling[]? Beoordelingen { get; init; }
-
-    public VerspakketFotoResponse[]? Fotos { get; init; }
+    public VerspakketFotoResponse? Foto { get; init; }
 
     public Supermarkt? Supermarkt { get; init; }
 }

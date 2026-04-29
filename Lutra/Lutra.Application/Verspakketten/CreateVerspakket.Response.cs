@@ -2,8 +2,8 @@ namespace Lutra.Application.Verspakketten;
 
 public sealed partial class CreateVerspakket
 {
-    public sealed class Response
+    public sealed record Response
     {
-        public required Guid Id { get; set; }
+        public required Guid Id { get; init; }
     }
 }

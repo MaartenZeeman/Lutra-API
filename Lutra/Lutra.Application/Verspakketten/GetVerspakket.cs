@@ -1,4 +1,3 @@
-namespace Lutra.Application.Verspakketten
-{
-    public sealed partial class GetVerspakket { }
-}
+namespace Lutra.Application.Verspakketten;
+
+public sealed partial class GetVerspakket { }

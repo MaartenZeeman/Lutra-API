@@ -5,12 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace Lutra.API.Controllers;
 
 /// <summary>
-/// Provides a dedicated endpoint group for Supermarkt-related operations.
+/// Provides endpoints for Supermarkt-related operations.
 /// </summary>
-/// <remarks>
-/// This controller is intentionally empty for now. Endpoints will be added when the Supermarkt
-/// use cases are implemented.
-/// </remarks>
 [ApiController]
 [Route("api/supermarkten")]
 [Produces("application/json")]
@@ -21,7 +17,7 @@ public class SupermarktenController(IMediator mediator) : ControllerBase
     /// </summary>
     /// <param name="skip">The number of items to skip.</param>
     /// <param name="take">The maximum number of items to return.</param>
-    /// <returns>The requested verspakket page.</returns>
+    /// <returns>The requested supermarkt page.</returns>
     [HttpGet]
     [ProducesResponseType(typeof(GetSupermarkten.Response), StatusCodes.Status200OK)]
     public async Task<GetSupermarkten.Response> Get(int skip = 0, int take = 50)

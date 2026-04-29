@@ -1,9 +1,8 @@
-﻿namespace Lutra.Application.Models.Supermarkten
-{
-    public record Supermarkt
-    {
-        public required Guid Id { get; init; }
+﻿namespace Lutra.Application.Models.Supermarkten;
 
-        public required string Naam { get; init; }
-    }
+public record Supermarkt
+{
+    public required Guid Id { get; init; }
+
+    public required string Naam { get; init; }
 }

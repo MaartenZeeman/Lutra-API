@@ -88,6 +88,7 @@ Add FluentValidation, AutoMapper, Shouldly, Moq, or Respawn only if the reposito
 - Keep class and file names consistent with the feature name.
 - Use sealed types where the project already does.
 - Prefer explicit `required` members where the current codebase uses them.
+- Always use **file-scoped namespaces** (`namespace Foo.Bar;`), never block-scoped (`namespace Foo.Bar { }`).
 - Preserve current indentation and brace style in each file.
 
 ## Testing guidance

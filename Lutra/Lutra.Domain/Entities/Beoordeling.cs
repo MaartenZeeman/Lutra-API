@@ -16,4 +16,6 @@ public class Beoordeling : BaseEntity
     public string? Tekst { get; set; }
 
     public required Guid VerspakketId { get; set; }
+
+    public virtual Verspakket Verspakket { get; set; } = null!;
 }

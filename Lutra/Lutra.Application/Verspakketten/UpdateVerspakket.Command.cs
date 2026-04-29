@@ -1,4 +1,5 @@
 using Cortex.Mediator.Commands;
+using Lutra.Application.Models.Verspakketten;
 
 namespace Lutra.Application.Verspakketten;
 
@@ -7,5 +8,11 @@ public sealed partial class UpdateVerspakket
     /// <summary>
     /// Updates an existing verspakket.
     /// </summary>
-    public sealed record Command(Guid Id, string Naam, int PrijsInCenten, int AantalPersonen, Guid SupermarktId) : ICommand<Response>;
+    public sealed record Command(
+        Guid Id,
+        string Naam,
+        int PrijsInCenten,
+        int AantalPersonen,
+        Guid SupermarktId,
+        IReadOnlyList<VerspakketFoto>? Fotos = null) : ICommand<Response>;
 }

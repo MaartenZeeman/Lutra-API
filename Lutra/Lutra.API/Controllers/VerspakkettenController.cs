@@ -3,134 +3,158 @@ using Lutra.API.Requests;
 using Lutra.Application.Verspakketten;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Lutra.API.Controllers
+namespace Lutra.API.Controllers;
+
+/// <summary>
+/// Provides access to verspakket resources.
+/// </summary>
+[ApiController]
+[Route("api/verspakketten")]
+[Produces("application/json")]
+public class VerspakkettenController(IMediator mediator) : ControllerBase
 {
     /// <summary>
-    /// Provides access to verspakket resources.
+    /// Gets a page of verspakketten.
     /// </summary>
-    [ApiController]
-    [Route("api/verspakketten")]
-    [Produces("application/json")]
-    public class VerspakkettenController(IMediator mediator) : ControllerBase
+    /// <param name="skip">The number of items to skip. Default: 0.</param>
+    /// <param name="take">The maximum number of items to return. Default: 50.</param>
+    /// <param name="sortField">The field to sort by: Naam, PrijsInCenten, AverageCijferSmaak, or AverageCijferBereiden. Default: Naam.</param>
+    /// <param name="sortDirection">The sort direction: Ascending or Descending. Default: Ascending.</param>
+    /// <returns>The requested verspakket page.</returns>
+    [HttpGet]
+    [ProducesResponseType(typeof(GetVerspakketten.Response), StatusCodes.Status200OK)]
+    public async Task<GetVerspakketten.Response> Get(
+        int skip = 0,
+        int take = 50,
+        VerspakketSortField sortField = VerspakketSortField.Naam,
+        SortDirection sortDirection = SortDirection.Ascending)
     {
-        /// <summary>
-        /// Gets a page of verspakketten.
-        /// </summary>
-        /// <param name="skip">The number of items to skip. Default: 0.</param>
-        /// <param name="take">The maximum number of items to return. Default: 50.</param>
-        /// <param name="sortField">The field to sort by: Naam, PrijsInCenten, AverageCijferSmaak, or AverageCijferBereiden. Default: Naam.</param>
-        /// <param name="sortDirection">The sort direction: Ascending or Descending. Default: Ascending.</param>
-        /// <returns>The requested verspakket page.</returns>
-        [HttpGet]
-        [ProducesResponseType(typeof(GetVerspakketten.Response), StatusCodes.Status200OK)]
-        public async Task<GetVerspakketten.Response> Get(
-            int skip = 0,
-            int take = 50,
-            VerspakketSortField sortField = VerspakketSortField.Naam,
-            SortDirection sortDirection = SortDirection.Ascending)
+        return await mediator.SendQueryAsync<GetVerspakketten.Query, GetVerspakketten.Response>(
+            new GetVerspakketten.Query(skip, take, sortField, sortDirection));
+    }
+
+    /// <summary>
+    /// Gets a specific verspakket by ID.
+    /// </summary>
+    /// <param name="id">The verspakket ID.</param>
+    /// <returns>Returns 200 OK with the verspakket when found, or 404 Not Found when not found.</returns>
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(GetVerspakket.Response), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<GetVerspakket.Response?>> GetById(Guid id)
+    {
+        var result = await mediator.SendQueryAsync<GetVerspakket.Query, GetVerspakket.Response?>(new GetVerspakket.Query(id));
+        if (result?.Verspakket == null)
         {
-            return await mediator.SendQueryAsync<GetVerspakketten.Query, GetVerspakketten.Response>(
-                new GetVerspakketten.Query(skip, take, sortField, sortDirection));
+            return NotFound();
         }
 
-        /// <summary>
-        /// Gets a specific verspakket by ID.
-        /// </summary>
-        /// <param name="id">The verspakket ID.</param>
-        /// <returns>Returns 200 OK with the verspakket when found, or 404 Not Found when not found.</returns>
-        [HttpGet("{id:guid}")]
-        [ProducesResponseType(typeof(GetVerspakket.Response), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<GetVerspakket.Response?>> GetById(Guid id)
-        {
-            var result = await mediator.SendQueryAsync<GetVerspakket.Query, GetVerspakket.Response?>(new GetVerspakket.Query(id));
-            if (result?.Verspakket == null)
-            {
-                return NotFound();
-            }
+        return Ok(result);
+    }
 
-            return Ok(result);
+    /// <summary>
+    /// Creates a new verspakket.
+    /// </summary>
+    /// <param name="request">The verspakket values to create.</param>
+    /// <returns>Returns 201 Created with the created verspakket identifier.</returns>
+    [HttpPost]
+    [ProducesResponseType(typeof(CreateVerspakket.Response), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<CreateVerspakket.Response>> Post([FromBody] CreateVerspakketRequest request)
+    {
+        try
+        {
+            var beoordeling = request.Beoordeling is null
+                ? null
+                : new Application.Models.Verspakketten.Beoordeling
+                {
+                    CijferSmaak = request.Beoordeling.CijferSmaak,
+                    CijferBereiden = request.Beoordeling.CijferBereiden,
+                    Aanbevolen = request.Beoordeling.Aanbevolen,
+                    Tekst = request.Beoordeling.Tekst
+                };
+
+            var fotos = request.Fotos?
+                .Select(f => new Application.Models.Verspakketten.VerspakketFoto(f.Base64Data, f.IsMainImage))
+                .ToList();
+
+            var command = new CreateVerspakket.Command(
+                request.Naam,
+                request.PrijsInCenten,
+                request.AantalPersonen,
+                request.SupermarktId,
+                beoordeling,
+                fotos);
+
+            var result = await mediator.SendCommandAsync<CreateVerspakket.Command, CreateVerspakket.Response>(command);
+
+            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
-
-        /// <summary>
-        /// Creates a new verspakket.
-        /// </summary>
-        /// <param name="command">The verspakket values to create.</param>
-        /// <returns>Returns 201 Created with the created verspakket identifier.</returns>
-        [HttpPost]
-        [ProducesResponseType(typeof(CreateVerspakket.Response), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<CreateVerspakket.Response>> Post([FromBody] CreateVerspakket.Command command)
+        catch (InvalidOperationException ex)
         {
-            try
-            {
-                var result = await mediator.SendCommandAsync<CreateVerspakket.Command, CreateVerspakket.Response>(command);
-
-                return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return BadRequest(ex.Message);
         }
+    }
 
-        /// <summary>
-        /// Updates an existing verspakket with the provided values.
-        /// </summary>
-        /// <param name="id">The verspakket identifier.</param>
-        /// <param name="request">The updated verspakket values.</param>
-        /// <returns>
-        /// Returns 204 No Content when the update succeeds.
-        /// Returns 404 Not Found when the specified verspakket does not exist.
-        /// </returns>
-        [HttpPut("{id:guid}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateVerspakketRequest request)
+    /// <summary>
+    /// Updates an existing verspakket with the provided values.
+    /// </summary>
+    /// <param name="id">The verspakket identifier.</param>
+    /// <param name="request">The updated verspakket values.</param>
+    /// <returns>
+    /// Returns 204 No Content when the update succeeds.
+    /// Returns 404 Not Found when the specified verspakket does not exist.
+    /// </returns>
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateVerspakketRequest request)
+    {
+        try
         {
-            try
-            {
-                var command = new UpdateVerspakket.Command(id, request.Naam, request.PrijsInCenten, request.AantalPersonen, request.SupermarktId);
-                await mediator.SendCommandAsync<UpdateVerspakket.Command, UpdateVerspakket.Response>(command);
-                return NoContent();
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (InvalidOperationException ex) when (ex.Message.StartsWith($"Verspakket with id '{id}'"))
-            {
-                return NotFound();
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var fotos = request.Fotos?
+                .Select(f => new Application.Models.Verspakketten.VerspakketFoto(f.Base64Data, f.IsMainImage))
+                .ToList();
+            var command = new UpdateVerspakket.Command(id, request.Naam, request.PrijsInCenten, request.AantalPersonen, request.SupermarktId, fotos);
+            await mediator.SendCommandAsync<UpdateVerspakket.Command, UpdateVerspakket.Response>(command);
+            return NoContent();
         }
-
-        /// <summary>
-        /// Adds a beoordeling to an existing verspakket.
-        /// </summary>
-        /// <param name="id">The verspakket ID.</param>
-        /// <param name="request">The beoordeling values to add.</param>
-        /// <returns>Returns 201 Created with the created beoordeling identifier.</returns>
-        [HttpPost("{id:guid}/beoordelingen")]
-        [ProducesResponseType(typeof(AddBeoordeling.Response), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<AddBeoordeling.Response>> AddBeoordeling(Guid id, [FromBody] AddBeoordelingRequest request)
+        catch (ArgumentException ex)
         {
-            try
-            {
-                var command = new AddBeoordeling.Command(id, request.CijferSmaak, request.CijferBereiden, request.Aanbevolen, request.Tekst);
-                var result = await mediator.SendCommandAsync<AddBeoordeling.Command, AddBeoordeling.Response>(command);
+            return BadRequest(ex.Message);
+        }
+        catch (InvalidOperationException ex) when (ex.Message.StartsWith($"Verspakket with id '{id}'"))
+        {
+            return NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
 
-                return CreatedAtAction(nameof(GetById), new { id }, result);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+    /// <summary>
+    /// Adds a beoordeling to an existing verspakket.
+    /// </summary>
+    /// <param name="id">The verspakket ID.</param>
+    /// <param name="request">The beoordeling values to add.</param>
+    /// <returns>Returns 201 Created with the created beoordeling identifier.</returns>
+    [HttpPost("{id:guid}/beoordelingen")]
+    [ProducesResponseType(typeof(AddBeoordeling.Response), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<AddBeoordeling.Response>> AddBeoordeling(Guid id, [FromBody] AddBeoordelingRequest request)
+    {
+        try
+        {
+            var command = new AddBeoordeling.Command(id, request.CijferSmaak, request.CijferBereiden, request.Aanbevolen, request.Tekst);
+            var result = await mediator.SendCommandAsync<AddBeoordeling.Command, AddBeoordeling.Response>(command);
+
+            return CreatedAtAction(nameof(GetById), new { id }, result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
         }
     }
 }

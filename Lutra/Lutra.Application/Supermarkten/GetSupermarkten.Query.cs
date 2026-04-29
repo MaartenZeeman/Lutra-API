@@ -1,9 +1,8 @@
 using Cortex.Mediator.Queries;
 
-namespace Lutra.Application.Supermarkten
+namespace Lutra.Application.Supermarkten;
+
+public sealed partial class GetSupermarkten
 {
-    public sealed partial class GetSupermarkten
-    {
-        public record Query(int Skip, int Take) : IQuery<Response>;
-    }
+    public record Query(int Skip, int Take) : IQuery<Response>;
 }

@@ -32,6 +32,7 @@ public sealed partial class UpdateVerspakket
                 throw new ArgumentException("AantalPersonen moet tussen 1 en 10 liggen.", nameof(request.AantalPersonen));
 
             var verspakket = await context.Verspaketten
+                .Include(v => v.Fotos)
                 .FirstOrDefaultAsync(v => v.Id == request.Id && v.DeletedAt == null, cancellationToken);
 
             if (verspakket is null)
@@ -53,6 +54,32 @@ public sealed partial class UpdateVerspakket
             verspakket.AantalPersonen = request.AantalPersonen;
             verspakket.SupermarktId = request.SupermarktId;
             verspakket.ModifiedAt = DateTime.UtcNow;
+
+            if (request.Fotos is not null)
+            {
+                // Replace all existing fotos
+                foreach (var existing in verspakket.Fotos.ToList())
+                    verspakket.RemoveFoto(existing.Id);
+
+                context.VerspakketFotos.RemoveRange(
+                    await context.VerspakketFotos
+                        .Where(f => f.VerspakketId == request.Id)
+                        .ToListAsync(cancellationToken));
+
+                var now = DateTime.UtcNow;
+                foreach (var foto in request.Fotos)
+                {
+                    verspakket.AddFoto(new Domain.Entities.VerspakketFoto
+                    {
+                        Id = Guid.NewGuid(),
+                        Data = Convert.FromBase64String(foto.Base64Data),
+                        IsMainImage = foto.IsMainImage,
+                        VerspakketId = verspakket.Id,
+                        CreatedAt = now,
+                        ModifiedAt = now
+                    });
+                }
+            }
 
             await context.SaveChangesAsync(cancellationToken);
 
