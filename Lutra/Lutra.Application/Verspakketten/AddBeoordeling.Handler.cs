@@ -1,4 +1,5 @@
 using Cortex.Mediator.Commands;
+using Lutra.Application.Exceptions;
 using Lutra.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,7 +17,7 @@ public sealed partial class AddBeoordeling
 
             if (!verspakketExists)
             {
-                throw new InvalidOperationException($"Verspakket with id '{request.VerspakketId}' was not found.");
+                throw new NotFoundException($"Verspakket with id '{request.VerspakketId}' was not found.");
             }
 
             var now = DateTime.UtcNow;

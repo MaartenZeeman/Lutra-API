@@ -155,12 +155,12 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
     }
 
     [Fact]
-    public async Task Post_ReturnsBadRequest_WhenSupermarktDoesNotExist()
+    public async Task Post_ReturnsNotFound_WhenSupermarktDoesNotExist()
     {
         var request = new CreateVerspakketRequest("Winter Pakket", 999, 2, Guid.NewGuid());
         var response = await Client.PostAsJsonAsync("/api/verspakketten", request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     // ── PUT /api/verspakketten/{id} ───────────────────────────────────────────
@@ -202,7 +202,7 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
     }
 
     [Fact]
-    public async Task Update_ReturnsBadRequest_WhenSupermarktDoesNotExist()
+    public async Task Update_ReturnsNotFound_WhenSupermarktDoesNotExist()
     {
         var supermarkt = await SeedAsync(new Supermarkt
         {
@@ -219,7 +219,7 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
         var request = new UpdateVerspakketRequest("Pakket", 999, 2, Guid.NewGuid());
         var response = await Client.PutAsJsonAsync($"/api/verspakketten/{verspakket.Id}", request);
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     // ── GET /api/verspakketten — pagination & sorting ─────────────────────────
@@ -291,12 +291,12 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
     // ── POST /api/verspakketten/{id}/beoordelingen ────────────────────────────
 
     [Fact]
-    public async Task AddBeoordeling_ReturnsBadRequest_WhenVerspakketDoesNotExist()
+    public async Task AddBeoordeling_ReturnsNotFound_WhenVerspakketDoesNotExist()
     {
         var command = new AddBeoordeling.Command(Guid.NewGuid(), 8, 7, true, "Heerlijk!");
         var response = await Client.PostAsJsonAsync($"/api/verspakketten/{command.VerspakketId}/beoordelingen", command);
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]

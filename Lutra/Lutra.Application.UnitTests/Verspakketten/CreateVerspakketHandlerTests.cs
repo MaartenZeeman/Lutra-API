@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Lutra.Application.Exceptions;
 using Lutra.Application.Interfaces;
 using Lutra.Application.Models.Verspakketten;
 using Lutra.Application.Verspakketten;
@@ -40,7 +41,7 @@ public class CreateVerspakketHandlerTests
     }
 
     [Fact]
-    public async Task Handle_SupermarktNotFound_ThrowsInvalidOperationException()
+    public async Task Handle_SupermarktNotFound_ThrowsNotFoundException()
     {
         _contextMock.Setup(c => c.Supermarkten).ReturnsDbSet(new List<Domain.Entities.Supermarkt>());
 
@@ -48,7 +49,7 @@ public class CreateVerspakketHandlerTests
 
         var act = () => _handler.Handle(command, CancellationToken.None);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
+        await act.Should().ThrowAsync<NotFoundException>()
             .WithMessage("*was not found*");
     }
 

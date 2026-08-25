@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Lutra.Application.Exceptions;
 using Lutra.Application.Interfaces;
 using Lutra.Application.Supermarkten;
 using Moq;
@@ -40,7 +41,7 @@ public class CreateSupermarktHandlerTests
     {
         var act = () => _handler.Handle(new CreateSupermarkt.Command("  "), CancellationToken.None);
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.Should().ThrowAsync<ValidationException>();
     }
 
     [Fact]
@@ -48,6 +49,6 @@ public class CreateSupermarktHandlerTests
     {
         var act = () => _handler.Handle(new CreateSupermarkt.Command(new string('a', 51)), CancellationToken.None);
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.Should().ThrowAsync<ValidationException>();
     }
 }

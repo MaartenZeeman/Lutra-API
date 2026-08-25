@@ -1,5 +1,6 @@
 
 using Cortex.Mediator.DependencyInjection;
+using Lutra.API.Middleware;
 using Lutra.Application.Verspakketten;
 using Lutra.Application.Interfaces;
 using Lutra.Infrastructure.Sql;
@@ -57,6 +58,7 @@ namespace Lutra.API
 
             app.UseAuthorization();
 
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
 
             app.MapControllers();
 

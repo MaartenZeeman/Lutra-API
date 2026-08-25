@@ -1,4 +1,5 @@
 using Cortex.Mediator.Commands;
+using Lutra.Application.Exceptions;
 using Lutra.Application.Interfaces;
 using Lutra.Application.Models.Verspakketten;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +18,7 @@ public sealed partial class CreateVerspakket
 
             if (!supermarktExists)
             {
-                throw new InvalidOperationException($"Supermarkt with id '{request.SupermarktId}' was not found.");
+                throw new NotFoundException($"Supermarkt with id '{request.SupermarktId}' was not found.");
             }
 
             if (request.Ingredienten is not null)
@@ -25,16 +26,16 @@ public sealed partial class CreateVerspakket
                 foreach (var ingredient in request.Ingredienten)
                 {
                     if (string.IsNullOrWhiteSpace(ingredient.Naam))
-                        throw new ArgumentException("Ingrediëntnaam mag niet leeg zijn.", nameof(request.Ingredienten));
+                        throw new ValidationException("Ingrediëntnaam mag niet leeg zijn.");
 
                     if (ingredient.Naam.Length > 100)
-                        throw new ArgumentException("Ingrediëntnaam mag maximaal 100 tekens bevatten.", nameof(request.Ingredienten));
+                        throw new ValidationException("Ingrediëntnaam mag maximaal 100 tekens bevatten.");
 
                     if (ingredient.Hoeveelheid <= 0)
-                        throw new ArgumentException("Hoeveelheid moet groter zijn dan 0.", nameof(request.Ingredienten));
+                        throw new ValidationException("Hoeveelheid moet groter zijn dan 0.");
 
                     if (!Enum.IsDefined(ingredient.Eenheid))
-                        throw new ArgumentException("Eenheid is geen geldige waarde.", nameof(request.Ingredienten));
+                        throw new ValidationException("Eenheid is geen geldige waarde.");
                 }
             }
 

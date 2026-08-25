@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Lutra.Application.Exceptions;
 using Lutra.Application.Interfaces;
 using Lutra.Application.Verspakketten;
 using Microsoft.EntityFrameworkCore;
@@ -40,7 +41,7 @@ public class AddBeoordelingHandlerTests
     }
 
     [Fact]
-    public async Task Handle_VerspakketNotFound_ThrowsInvalidOperationException()
+    public async Task Handle_VerspakketNotFound_ThrowsNotFoundException()
     {
         _contextMock.Setup(c => c.Verspaketten).ReturnsDbSet(new List<Domain.Entities.Verspakket>());
 
@@ -48,12 +49,12 @@ public class AddBeoordelingHandlerTests
 
         var act = () => _handler.Handle(command, CancellationToken.None);
 
-        await act.Should().ThrowAsync<InvalidOperationException>()
+        await act.Should().ThrowAsync<NotFoundException>()
             .WithMessage("*was not found*");
     }
 
     [Fact]
-    public async Task Handle_VerspakketDeleted_ThrowsInvalidOperationException()
+    public async Task Handle_VerspakketDeleted_ThrowsNotFoundException()
     {
         var verspakketId = Guid.NewGuid();
         var verspakketten = new List<Domain.Entities.Verspakket>
@@ -67,6 +68,6 @@ public class AddBeoordelingHandlerTests
 
         var act = () => _handler.Handle(command, CancellationToken.None);
 
-        await act.Should().ThrowAsync<InvalidOperationException>();
+        await act.Should().ThrowAsync<NotFoundException>();
     }
 }

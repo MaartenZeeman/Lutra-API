@@ -1,4 +1,5 @@
 using Cortex.Mediator.Commands;
+using Lutra.Application.Exceptions;
 using Lutra.Application.Interfaces;
 
 namespace Lutra.Application.Supermarkten;
@@ -10,10 +11,10 @@ public sealed partial class CreateSupermarkt
         public async Task<Response> Handle(Command request, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(request.Naam))
-                throw new ArgumentException("Naam mag niet leeg zijn.", nameof(request.Naam));
+                throw new ValidationException("Naam mag niet leeg zijn.");
 
             if (request.Naam.Length > 50)
-                throw new ArgumentException("Naam mag maximaal 50 tekens bevatten.", nameof(request.Naam));
+                throw new ValidationException("Naam mag maximaal 50 tekens bevatten.");
 
             var now = DateTime.UtcNow;
             var supermarkt = new Domain.Entities.Supermarkt

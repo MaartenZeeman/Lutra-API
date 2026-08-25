@@ -1,4 +1,5 @@
 using Cortex.Mediator.Commands;
+using Lutra.Application.Exceptions;
 using Lutra.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,32 +21,32 @@ public sealed partial class UpdateVerspakket
         public async Task<Response> Handle(Command request, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(request.Naam))
-                throw new ArgumentException("Naam mag niet leeg zijn.", nameof(request.Naam));
+                throw new ValidationException("Naam mag niet leeg zijn.");
 
             if (request.Naam.Length > 50)
-                throw new ArgumentException("Naam mag maximaal 50 tekens bevatten.", nameof(request.Naam));
+                throw new ValidationException("Naam mag maximaal 50 tekens bevatten.");
 
             if (request.PrijsInCenten < 0)
-                throw new ArgumentException("PrijsInCenten mag niet negatief zijn.", nameof(request.PrijsInCenten));
+                throw new ValidationException("PrijsInCenten mag niet negatief zijn.");
 
             if (request.AantalPersonen is < 1 or > 10)
-                throw new ArgumentException("AantalPersonen moet tussen 1 en 10 liggen.", nameof(request.AantalPersonen));
+                throw new ValidationException("AantalPersonen moet tussen 1 en 10 liggen.");
 
             if (request.Ingredienten is not null)
             {
                 foreach (var ingredient in request.Ingredienten)
                 {
                     if (string.IsNullOrWhiteSpace(ingredient.Naam))
-                        throw new ArgumentException("Ingrediëntnaam mag niet leeg zijn.", nameof(request.Ingredienten));
+                        throw new ValidationException("Ingrediëntnaam mag niet leeg zijn.");
 
                     if (ingredient.Naam.Length > 100)
-                        throw new ArgumentException("Ingrediëntnaam mag maximaal 100 tekens bevatten.", nameof(request.Ingredienten));
+                        throw new ValidationException("Ingrediëntnaam mag maximaal 100 tekens bevatten.");
 
                     if (ingredient.Hoeveelheid <= 0)
-                        throw new ArgumentException("Hoeveelheid moet groter zijn dan 0.", nameof(request.Ingredienten));
+                        throw new ValidationException("Hoeveelheid moet groter zijn dan 0.");
 
                     if (!Enum.IsDefined(ingredient.Eenheid))
-                        throw new ArgumentException("Eenheid is geen geldige waarde.", nameof(request.Ingredienten));
+                        throw new ValidationException("Eenheid is geen geldige waarde.");
                 }
             }
 
@@ -56,7 +57,7 @@ public sealed partial class UpdateVerspakket
 
             if (verspakket is null)
             {
-                throw new InvalidOperationException($"Verspakket with id '{request.Id}' was not found.");
+                throw new NotFoundException($"Verspakket with id '{request.Id}' was not found.");
             }
 
             var supermarktExists = await context.Supermarkten
@@ -65,7 +66,7 @@ public sealed partial class UpdateVerspakket
 
             if (!supermarktExists)
             {
-                throw new InvalidOperationException($"Supermarkt with id '{request.SupermarktId}' was not found.");
+                throw new NotFoundException($"Supermarkt with id '{request.SupermarktId}' was not found.");
             }
 
             verspakket.Naam = request.Naam;

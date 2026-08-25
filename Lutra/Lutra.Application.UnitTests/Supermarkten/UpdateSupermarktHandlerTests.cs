@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Lutra.Application.Exceptions;
 using Lutra.Application.Interfaces;
 using Lutra.Application.Supermarkten;
 using Moq;
@@ -40,14 +41,14 @@ public class UpdateSupermarktHandlerTests
     }
 
     [Fact]
-    public async Task Handle_SupermarktNotFound_ThrowsInvalidOperationException()
+    public async Task Handle_SupermarktNotFound_ThrowsNotFoundException()
     {
         _contextMock.Setup(c => c.Supermarkten).ReturnsDbSet(new List<Domain.Entities.Supermarkt>());
         _contextMock.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
         var act = () => _handler.Handle(new UpdateSupermarkt.Command(Guid.NewGuid(), "Pakket"), CancellationToken.None);
 
-        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("*was not found*");
+        await act.Should().ThrowAsync<NotFoundException>().WithMessage("*was not found*");
     }
 
     [Fact]
@@ -65,6 +66,6 @@ public class UpdateSupermarktHandlerTests
 
         var act = () => _handler.Handle(new UpdateSupermarkt.Command(supermarkt.Id, "  "), CancellationToken.None);
 
-        await act.Should().ThrowAsync<ArgumentException>();
+        await act.Should().ThrowAsync<ValidationException>();
     }
 }
