@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using Lutra.API.IntegrationTests.Infrastructure;
+using Lutra.API.Requests;
 using Lutra.Application.Supermarkten;
 using Lutra.Domain.Entities;
 
@@ -153,5 +154,54 @@ public class SupermarktenControllerTests(LutraApiFactory factory)
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<GetSupermarkten.Response>();
         body!.Supermarkten.Should().BeEmpty();
+    }
+
+    // ── POST /api/supermarkten ────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Post_CreatesSupermarkt_AndReturns201()
+    {
+        var request = new SupermarktRequest("Jumbo");
+        var response = await Client.PostAsJsonAsync("/api/supermarkten", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var body = await response.Content.ReadFromJsonAsync<CreateSupermarkt.Response>();
+        body!.Id.Should().NotBeEmpty();
+        response.Headers.Location.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task Post_ReturnsBadRequest_WhenNaamEmpty()
+    {
+        var request = new SupermarktRequest("");
+        var response = await Client.PostAsJsonAsync("/api/supermarkten", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    // ── PUT /api/supermarkten/{id} ────────────────────────────────────────────
+
+    [Fact]
+    public async Task Update_ReturnsNoContent_WhenSupermarktExists()
+    {
+        var supermarkt = await SeedAsync(new Supermarkt
+        {
+            Id = Guid.NewGuid(), Naam = "Oud",
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        });
+
+        var request = new SupermarktRequest("Nieuw");
+        var response = await Client.PutAsJsonAsync($"/api/supermarkten/{supermarkt.Id}", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+    }
+
+    [Fact]
+    public async Task Update_ReturnsNotFound_WhenSupermarktDoesNotExist()
+    {
+        var request = new SupermarktRequest("Nieuw");
+        var response = await Client.PutAsJsonAsync($"/api/supermarkten/{Guid.NewGuid()}", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 }
