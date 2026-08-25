@@ -11,5 +11,6 @@ public sealed partial class CreateVerspakket
         int AantalPersonen,
         Guid SupermarktId,
         Beoordeling? Beoordeling,
-        IReadOnlyList<VerspakketFoto>? Fotos = null) : ICommand<Response>;
+        IReadOnlyList<VerspakketFoto>? Fotos = null,
+        IReadOnlyList<Ingredient>? Ingredienten = null) : ICommand<Response>;
 }

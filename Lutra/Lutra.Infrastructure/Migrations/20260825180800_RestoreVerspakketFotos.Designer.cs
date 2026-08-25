@@ -3,6 +3,7 @@ using System;
 using Lutra.Infrastructure.Sql;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Lutra.Infrastructure.Sql.Migrations
 {
     [DbContext(typeof(LutraDbContext))]
-    partial class LutraDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260825180800_RestoreVerspakketFotos")]
+    partial class RestoreVerspakketFotos
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -58,49 +61,6 @@ namespace Lutra.Infrastructure.Sql.Migrations
                     b.HasIndex("VerspakketId");
 
                     b.ToTable("Beoordelingen");
-                });
-
-            modelBuilder.Entity("Lutra.Domain.Entities.Ingredient", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Eenheid")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("Hoeveelheid")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("numeric(10,2)");
-
-                    b.Property<bool>("Inbegrepen")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Naam")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<Guid>("VerspakketId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("VerspakketId");
-
-                    b.ToTable("Ingredienten", t =>
-                        {
-                            t.HasCheckConstraint("CK_Ingredienten_Hoeveelheid", "\"Hoeveelheid\" > 0");
-                        });
                 });
 
             modelBuilder.Entity("Lutra.Domain.Entities.Supermarkt", b =>
@@ -212,17 +172,6 @@ namespace Lutra.Infrastructure.Sql.Migrations
                     b.Navigation("Verspakket");
                 });
 
-            modelBuilder.Entity("Lutra.Domain.Entities.Ingredient", b =>
-                {
-                    b.HasOne("Lutra.Domain.Entities.Verspakket", "Verspakket")
-                        .WithMany("Ingredienten")
-                        .HasForeignKey("VerspakketId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Verspakket");
-                });
-
             modelBuilder.Entity("Lutra.Domain.Entities.Verspakket", b =>
                 {
                     b.HasOne("Lutra.Domain.Entities.Supermarkt", "Supermarkt")
@@ -250,8 +199,6 @@ namespace Lutra.Infrastructure.Sql.Migrations
                     b.Navigation("Beoordelingen");
 
                     b.Navigation("Fotos");
-
-                    b.Navigation("Ingredienten");
                 });
 #pragma warning restore 612, 618
         }

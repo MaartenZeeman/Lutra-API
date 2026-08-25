@@ -20,6 +20,24 @@ public sealed partial class CreateVerspakket
                 throw new InvalidOperationException($"Supermarkt with id '{request.SupermarktId}' was not found.");
             }
 
+            if (request.Ingredienten is not null)
+            {
+                foreach (var ingredient in request.Ingredienten)
+                {
+                    if (string.IsNullOrWhiteSpace(ingredient.Naam))
+                        throw new ArgumentException("Ingrediëntnaam mag niet leeg zijn.", nameof(request.Ingredienten));
+
+                    if (ingredient.Naam.Length > 100)
+                        throw new ArgumentException("Ingrediëntnaam mag maximaal 100 tekens bevatten.", nameof(request.Ingredienten));
+
+                    if (ingredient.Hoeveelheid <= 0)
+                        throw new ArgumentException("Hoeveelheid moet groter zijn dan 0.", nameof(request.Ingredienten));
+
+                    if (!Enum.IsDefined(ingredient.Eenheid))
+                        throw new ArgumentException("Eenheid is geen geldige waarde.", nameof(request.Ingredienten));
+                }
+            }
+
             var now = DateTime.UtcNow;
             var verspakket = new Domain.Entities.Verspakket
             {
@@ -56,6 +74,24 @@ public sealed partial class CreateVerspakket
                         Id = Guid.NewGuid(),
                         Data = Convert.FromBase64String(foto.Base64Data),
                         IsMainImage = foto.IsMainImage,
+                        VerspakketId = verspakket.Id,
+                        CreatedAt = now,
+                        ModifiedAt = now
+                    });
+                }
+            }
+
+            if (request.Ingredienten is { Count: > 0 })
+            {
+                foreach (var ingredient in request.Ingredienten)
+                {
+                    verspakket.AddIngredient(new Domain.Entities.Ingredient
+                    {
+                        Id = Guid.NewGuid(),
+                        Naam = ingredient.Naam,
+                        Hoeveelheid = ingredient.Hoeveelheid,
+                        Eenheid = ingredient.Eenheid,
+                        Inbegrepen = ingredient.Inbegrepen,
                         VerspakketId = verspakket.Id,
                         CreatedAt = now,
                         ModifiedAt = now

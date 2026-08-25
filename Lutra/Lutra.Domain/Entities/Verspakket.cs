@@ -6,6 +6,7 @@ public class Verspakket : BaseEntity
 {
     private readonly List<Beoordeling> _beoordelingen = [];
     private readonly List<VerspakketFoto> _fotos = [];
+    private readonly List<Ingredient> _ingredienten = [];
 
     [MaxLength(50)]
     public required string Naam { get; set; }
@@ -24,6 +25,8 @@ public class Verspakket : BaseEntity
 
     public IReadOnlyCollection<VerspakketFoto> Fotos => _fotos.AsReadOnly();
 
+    public IReadOnlyCollection<Ingredient> Ingredienten => _ingredienten.AsReadOnly();
+
     public void AddBeoordeling(Beoordeling beoordeling)
     {
         _beoordelingen.Add(beoordeling);
@@ -32,6 +35,11 @@ public class Verspakket : BaseEntity
     public void AddFoto(VerspakketFoto foto)
     {
         _fotos.Add(foto);
+    }
+
+    public void AddIngredient(Ingredient ingredient)
+    {
+        _ingredienten.Add(ingredient);
     }
 
     public bool RemoveBeoordeling(Guid id)
@@ -51,6 +59,16 @@ public class Verspakket : BaseEntity
             return false;
 
         _fotos.Remove(foto);
+        return true;
+    }
+
+    public bool RemoveIngredient(Guid id)
+    {
+        var ingredient = _ingredienten.Find(i => i.Id == id);
+        if (ingredient is null)
+            return false;
+
+        _ingredienten.Remove(ingredient);
         return true;
     }
 }

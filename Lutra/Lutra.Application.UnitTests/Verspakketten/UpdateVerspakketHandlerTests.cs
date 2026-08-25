@@ -21,7 +21,8 @@ public class UpdateVerspakketHandlerTests
     }
 
     private (Guid verspakketId, Guid supermarktId) SetupContext(
-        List<Domain.Entities.VerspakketFoto>? existingFotos = null)
+        List<Domain.Entities.VerspakketFoto>? existingFotos = null,
+        List<Domain.Entities.Ingredient>? existingIngredienten = null)
     {
         var supermarktId = Guid.NewGuid();
         var verspakketId = Guid.NewGuid();
@@ -45,9 +46,13 @@ public class UpdateVerspakketHandlerTests
         foreach (var foto in existingFotos ?? [])
             verspakket.AddFoto(foto);
 
+        foreach (var ingredient in existingIngredienten ?? [])
+            verspakket.AddIngredient(ingredient);
+
         _contextMock.Setup(c => c.Supermarkten).ReturnsDbSet(supermarkten);
         _contextMock.Setup(c => c.Verspaketten).ReturnsDbSet(new List<Domain.Entities.Verspakket> { verspakket });
         _contextMock.Setup(c => c.VerspakketFotos).ReturnsDbSet(existingFotos ?? []);
+        _contextMock.Setup(c => c.Ingredienten).ReturnsDbSet(existingIngredienten ?? []);
         _contextMock.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
         return (verspakketId, supermarktId);
@@ -133,6 +138,91 @@ public class UpdateVerspakketHandlerTests
         var (verspakketId, supermarktId) = SetupContext();
 
         var command = new UpdateVerspakket.Command(verspakketId, "Pakket", 800, 0, supermarktId);
+
+        var act = () => _handler.Handle(command, CancellationToken.None);
+
+        await act.Should().ThrowAsync<ArgumentException>();
+    }
+
+    [Fact]
+    public async Task Handle_WithIngredienten_ReplacesIngredients()
+    {
+        var oldIngredient = new Domain.Entities.Ingredient
+        {
+            Id = Guid.NewGuid(),
+            Naam = "Oud",
+            Hoeveelheid = 100,
+            Eenheid = Domain.Entities.Eenheid.Gram,
+            Inbegrepen = true,
+            VerspakketId = Guid.NewGuid(),
+            CreatedAt = DateTime.UtcNow,
+            ModifiedAt = DateTime.UtcNow
+        };
+
+        var (verspakketId, supermarktId) = SetupContext(existingIngredienten: [oldIngredient]);
+        oldIngredient.VerspakketId = verspakketId;
+
+        List<Domain.Entities.Ingredient>? removed = null;
+        List<Domain.Entities.Ingredient>? added = null;
+        _contextMock
+            .Setup(c => c.Ingredienten.RemoveRange(It.IsAny<IEnumerable<Domain.Entities.Ingredient>>()))
+            .Callback<IEnumerable<Domain.Entities.Ingredient>>(x => removed = x.ToList());
+        _contextMock
+            .Setup(c => c.Ingredienten.AddRange(It.IsAny<IEnumerable<Domain.Entities.Ingredient>>()))
+            .Callback<IEnumerable<Domain.Entities.Ingredient>>(x => added = x.ToList());
+
+        var command = new UpdateVerspakket.Command(
+            verspakketId,
+            "Pakket",
+            999,
+            2,
+            supermarktId,
+            null,
+            new List<Ingredient>
+            {
+                new("Gehakt", 300, Domain.Entities.Eenheid.Gram, false),
+                new("Tomaten", 400, Domain.Entities.Eenheid.Gram, true)
+            });
+
+        await _handler.Handle(command, CancellationToken.None);
+
+        removed.Should().NotBeNull();
+        removed!.Should().ContainSingle().Which.Naam.Should().Be("Oud");
+
+        added.Should().NotBeNull();
+        added.Should().HaveCount(2);
+        added.Should().OnlyContain(i => i.VerspakketId == verspakketId);
+        added!.Single(i => i.Naam == "Gehakt").Inbegrepen.Should().BeFalse();
+        added.Single(i => i.Naam == "Tomaten").Inbegrepen.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Handle_NullIngredienten_DoesNotTouchIngredients()
+    {
+        var (verspakketId, supermarktId) = SetupContext();
+
+        var command = new UpdateVerspakket.Command(verspakketId, "Pakket", 800, 3, supermarktId, null, null);
+
+        await _handler.Handle(command, CancellationToken.None);
+
+        _contextMock.Verify(
+            c => c.Ingredienten.RemoveRange(It.IsAny<IEnumerable<Domain.Entities.Ingredient>>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task Handle_InvalidIngredientNaam_ThrowsArgumentException()
+    {
+        var (verspakketId, supermarktId) = SetupContext();
+
+        var command = new UpdateVerspakket.Command(
+            verspakketId,
+            "Pakket",
+            800,
+            2,
+            supermarktId,
+            null,
+            new List<Ingredient> { new("", 300, Domain.Entities.Eenheid.Gram, false) });
 
         var act = () => _handler.Handle(command, CancellationToken.None);
 

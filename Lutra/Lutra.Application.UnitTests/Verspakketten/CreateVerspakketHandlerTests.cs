@@ -53,6 +53,47 @@ public class CreateVerspakketHandlerTests
     }
 
     [Fact]
+    public async Task Handle_WithIngredienten_CreatesVerspakketWithIngredienten()
+    {
+        var supermarktId = Guid.NewGuid();
+        var supermarkten = new List<Domain.Entities.Supermarkt>
+        {
+            new() { Id = supermarktId, Naam = "Jumbo", CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow }
+        };
+
+        Domain.Entities.Verspakket? savedVerspakket = null;
+        _contextMock.Setup(c => c.Supermarkten).ReturnsDbSet(supermarkten);
+        _contextMock.Setup(c => c.Verspaketten).ReturnsDbSet(new List<Domain.Entities.Verspakket>());
+        _contextMock
+            .Setup(c => c.Verspaketten.AddAsync(It.IsAny<Domain.Entities.Verspakket>(), It.IsAny<CancellationToken>()))
+            .Callback<Domain.Entities.Verspakket, CancellationToken>((v, _) => savedVerspakket = v);
+        _contextMock.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+        var command = new CreateVerspakket.Command(
+            "Pasta Bolognese",
+            899,
+            2,
+            supermarktId,
+            null,
+            null,
+            new List<Ingredient>
+            {
+                new("Tomaten", 400, Domain.Entities.Eenheid.Gram, true),
+                new("Gehakt", 300, Domain.Entities.Eenheid.Gram, false)
+            });
+
+        await _handler.Handle(command, CancellationToken.None);
+
+        savedVerspakket.Should().NotBeNull();
+        savedVerspakket!.Ingredienten.Should().HaveCount(2);
+        var tomaten = savedVerspakket.Ingredienten.Single(i => i.Naam == "Tomaten");
+        tomaten.Hoeveelheid.Should().Be(400);
+        tomaten.Eenheid.Should().Be(Domain.Entities.Eenheid.Gram);
+        tomaten.Inbegrepen.Should().BeTrue();
+        savedVerspakket.Ingredienten.Single(i => i.Naam == "Gehakt").Inbegrepen.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task Handle_CreatesVerspakketWithCorrectProperties()
     {
         var supermarktId = Guid.NewGuid();

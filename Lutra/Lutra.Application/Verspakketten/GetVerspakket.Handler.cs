@@ -42,6 +42,13 @@ namespace Lutra.Application.Verspakketten;
                                             f.Id,
                                             Convert.ToBase64String(f.Data),
                                             f.IsMainImage))
+                                        .ToArray(),
+                                    Ingredienten = v.Ingredienten
+                                        .Select(i => new Ingredient(
+                                            i.Naam,
+                                            i.Hoeveelheid,
+                                            i.Eenheid,
+                                            i.Inbegrepen))
                                         .ToArray()
                                 })
                                 .SingleOrDefaultAsync(cancellationToken);

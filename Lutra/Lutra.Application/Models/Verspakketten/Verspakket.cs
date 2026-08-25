@@ -20,5 +20,7 @@ public record Verspakket
 
     public VerspakketFotoResponse[]? Fotos { get; init; }
 
+    public Ingredient[]? Ingredienten { get; init; }
+
     public Supermarkt? Supermarkt { get; init; }
 }

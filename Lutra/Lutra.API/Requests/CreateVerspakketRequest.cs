@@ -11,4 +11,5 @@ public sealed record CreateVerspakketRequest(
     [Range(1, 10)] int AantalPersonen,
     [Required] Guid SupermarktId,
     AddBeoordelingRequest? Beoordeling = null,
-    IReadOnlyList<VerspakketFotoRequest>? Fotos = null);
+    IReadOnlyList<VerspakketFotoRequest>? Fotos = null,
+    IReadOnlyList<IngredientRequest>? Ingredienten = null);

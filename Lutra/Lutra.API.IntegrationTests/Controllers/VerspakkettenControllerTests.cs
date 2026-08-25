@@ -321,4 +321,82 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
         var body = await response.Content.ReadFromJsonAsync<AddBeoordeling.Response>();
         body!.Id.Should().NotBeEmpty();
     }
+
+    // ── Ingredienten ──────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Post_CreatesVerspakket_WithIngredienten()
+    {
+        var supermarkt = await SeedAsync(new Supermarkt
+        {
+            Id = Guid.NewGuid(), Naam = "Picnic",
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        });
+
+        var request = new CreateVerspakketRequest(
+            "Pasta Bolognese",
+            899,
+            2,
+            supermarkt.Id,
+            Ingredienten:
+            [
+                new IngredientRequest("Tomaten", 400, Lutra.Domain.Entities.Eenheid.Gram, true),
+                new IngredientRequest("Gehakt", 300, Lutra.Domain.Entities.Eenheid.Gram, false)
+            ]);
+
+        var response = await Client.PostAsJsonAsync("/api/verspakketten", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var body = await response.Content.ReadFromJsonAsync<CreateVerspakket.Response>();
+
+        var created = await Client.GetFromJsonAsync<GetVerspakket.Response>($"/api/verspakketten/{body!.Id}");
+        created!.Verspakket.Ingredienten.Should().HaveCount(2);
+        var tomaten = created.Verspakket.Ingredienten!.Single(i => i.Naam == "Tomaten");
+        tomaten.Hoeveelheid.Should().Be(400);
+        tomaten.Eenheid.Should().Be(Lutra.Domain.Entities.Eenheid.Gram);
+        tomaten.Inbegrepen.Should().BeTrue();
+        created.Verspakket.Ingredienten.Single(i => i.Naam == "Gehakt").Inbegrepen.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Update_ReplacesIngredienten()
+    {
+        var supermarkt = await SeedAsync(new Supermarkt
+        {
+            Id = Guid.NewGuid(), Naam = "AH",
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        });
+        var verspakket = new Verspakket
+        {
+            Id = Guid.NewGuid(), Naam = "Pakket", AantalPersonen = 2,
+            SupermarktId = supermarkt.Id,
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        };
+        verspakket.AddIngredient(new Lutra.Domain.Entities.Ingredient
+        {
+            Id = Guid.NewGuid(), Naam = "Oud", Hoeveelheid = 100,
+            Eenheid = Lutra.Domain.Entities.Eenheid.Gram, Inbegrepen = true,
+            VerspakketId = verspakket.Id,
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        });
+        await SeedAsync(verspakket);
+
+        var request = new UpdateVerspakketRequest(
+            "Pakket",
+            999,
+            2,
+            supermarkt.Id,
+            Ingredienten:
+            [
+                new IngredientRequest("Olijfolie", 1, Lutra.Domain.Entities.Eenheid.Eetlepel, false)
+            ]);
+
+        var response = await Client.PutAsJsonAsync($"/api/verspakketten/{verspakket.Id}", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var created = await Client.GetFromJsonAsync<GetVerspakket.Response>($"/api/verspakketten/{verspakket.Id}");
+        created!.Verspakket.Ingredienten.Should().ContainSingle();
+        created.Verspakket.Ingredienten!.Single().Naam.Should().Be("Olijfolie");
+    }
 }

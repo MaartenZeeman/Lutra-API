@@ -31,8 +31,27 @@ public sealed partial class UpdateVerspakket
             if (request.AantalPersonen is < 1 or > 10)
                 throw new ArgumentException("AantalPersonen moet tussen 1 en 10 liggen.", nameof(request.AantalPersonen));
 
+            if (request.Ingredienten is not null)
+            {
+                foreach (var ingredient in request.Ingredienten)
+                {
+                    if (string.IsNullOrWhiteSpace(ingredient.Naam))
+                        throw new ArgumentException("Ingrediëntnaam mag niet leeg zijn.", nameof(request.Ingredienten));
+
+                    if (ingredient.Naam.Length > 100)
+                        throw new ArgumentException("Ingrediëntnaam mag maximaal 100 tekens bevatten.", nameof(request.Ingredienten));
+
+                    if (ingredient.Hoeveelheid <= 0)
+                        throw new ArgumentException("Hoeveelheid moet groter zijn dan 0.", nameof(request.Ingredienten));
+
+                    if (!Enum.IsDefined(ingredient.Eenheid))
+                        throw new ArgumentException("Eenheid is geen geldige waarde.", nameof(request.Ingredienten));
+                }
+            }
+
             var verspakket = await context.Verspaketten
                 .Include(v => v.Fotos)
+                .Include(v => v.Ingredienten)
                 .FirstOrDefaultAsync(v => v.Id == request.Id && v.DeletedAt == null, cancellationToken);
 
             if (verspakket is null)
@@ -79,6 +98,32 @@ public sealed partial class UpdateVerspakket
                         ModifiedAt = now
                     });
                 }
+            }
+
+            if (request.Ingredienten is not null)
+            {
+                // Replace all existing ingredients
+                context.Ingredienten.RemoveRange(
+                    await context.Ingredienten
+                        .Where(i => i.VerspakketId == request.Id)
+                        .ToListAsync(cancellationToken));
+
+                var now = DateTime.UtcNow;
+                var ingredienten = request.Ingredienten
+                    .Select(ing => new Domain.Entities.Ingredient
+                    {
+                        Id = Guid.NewGuid(),
+                        Naam = ing.Naam,
+                        Hoeveelheid = ing.Hoeveelheid,
+                        Eenheid = ing.Eenheid,
+                        Inbegrepen = ing.Inbegrepen,
+                        VerspakketId = verspakket.Id,
+                        CreatedAt = now,
+                        ModifiedAt = now
+                    })
+                    .ToList();
+
+                context.Ingredienten.AddRange(ingredienten);
             }
 
             await context.SaveChangesAsync(cancellationToken);

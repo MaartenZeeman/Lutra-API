@@ -11,6 +11,8 @@ public interface ILutraDbContext
 
     DbSet<VerspakketFoto> VerspakketFotos { get; }
 
+    DbSet<Ingredient> Ingredienten { get; }
+
     DbSet<Verspakket> Verspaketten { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);

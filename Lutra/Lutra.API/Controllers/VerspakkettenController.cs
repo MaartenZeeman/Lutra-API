@@ -78,13 +78,22 @@ public class VerspakkettenController(IMediator mediator) : ControllerBase
                 .Select(f => new Application.Models.Verspakketten.VerspakketFoto(f.Base64Data, f.IsMainImage))
                 .ToList();
 
+            var ingredienten = request.Ingredienten?
+                .Select(i => new Application.Models.Verspakketten.Ingredient(
+                    i.Naam,
+                    i.Hoeveelheid,
+                    i.Eenheid,
+                    i.Inbegrepen))
+                .ToList();
+
             var command = new CreateVerspakket.Command(
                 request.Naam,
                 request.PrijsInCenten,
                 request.AantalPersonen,
                 request.SupermarktId,
                 beoordeling,
-                fotos);
+                fotos,
+                ingredienten);
 
             var result = await mediator.SendCommandAsync<CreateVerspakket.Command, CreateVerspakket.Response>(command);
 
@@ -116,7 +125,14 @@ public class VerspakkettenController(IMediator mediator) : ControllerBase
             var fotos = request.Fotos?
                 .Select(f => new Application.Models.Verspakketten.VerspakketFoto(f.Base64Data, f.IsMainImage))
                 .ToList();
-            var command = new UpdateVerspakket.Command(id, request.Naam, request.PrijsInCenten, request.AantalPersonen, request.SupermarktId, fotos);
+            var ingredienten = request.Ingredienten?
+                .Select(i => new Application.Models.Verspakketten.Ingredient(
+                    i.Naam,
+                    i.Hoeveelheid,
+                    i.Eenheid,
+                    i.Inbegrepen))
+                .ToList();
+            var command = new UpdateVerspakket.Command(id, request.Naam, request.PrijsInCenten, request.AantalPersonen, request.SupermarktId, fotos, ingredienten);
             await mediator.SendCommandAsync<UpdateVerspakket.Command, UpdateVerspakket.Response>(command);
             return NoContent();
         }

@@ -1,0 +1,9 @@
+# Changelog
+
+## 25 August 2026
+
+- Installed 6 project-relevant skills globally via `npx skills`: `modern-csharp-coding-standards`, `dotnet-10-csharp-14`, `code-testing-agent`, `aspire-integration-testing`, `dotnet-testing-strategy`, and `postgresql`. The `mcp-csharp-test` skill could not be installed because it no longer exists in the `dotnet/skills` repository.
+- Added `Ingredient` support to `Verspakket`: new `Ingredient` domain entity and `Eenheid` enum (Gram, Kilogram, Milliliter, Liter, Eetlepel, Theelepel, Aantal) with name, quantity, unit, and an included/separate flag. Create and update endpoints now accept a list of ingredients, and the detail endpoint returns them; update replaces the ingredient list when supplied.
+- Fixed the EF Foto model/migration mismatch: a corrective `RestoreVerspakketFotos` migration restores `IsMainImage` and the non-unique `VerspakketId` index that were lost when the code moved back to a many-Fotos model.
+- Hardened the global soft-delete query filters to translate `DeletedAt` directly instead of the derived `IsDeleted` getter, which the SQLite-backed integration tests could not translate.
+- Ingredient feature review fixes: the `RestoreVerspakketFotos` migration now marks existing photos as the main image, ingredient requests validate the `Eenheid` enum value, the create handler validates ingredient names/quantities, the domain quantity annotation enforces `> 0`, and the update replacement unit test now asserts the old ingredient is removed and the new ones are added.

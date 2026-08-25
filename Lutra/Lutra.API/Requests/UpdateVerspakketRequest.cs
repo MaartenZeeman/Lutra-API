@@ -10,6 +10,7 @@ public sealed record UpdateVerspakketRequest(
     [Range(0, int.MaxValue)] int PrijsInCenten,
     [Range(1, 10)] int AantalPersonen,
     [Required] Guid SupermarktId,
-    IReadOnlyList<VerspakketFotoRequest>? Fotos = null);
+    IReadOnlyList<VerspakketFotoRequest>? Fotos = null,
+    IReadOnlyList<IngredientRequest>? Ingredienten = null);
 
 
