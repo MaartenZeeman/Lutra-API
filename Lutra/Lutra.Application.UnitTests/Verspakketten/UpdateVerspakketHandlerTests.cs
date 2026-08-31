@@ -12,6 +12,7 @@ public class UpdateVerspakketHandlerTests
 {
     private readonly Mock<ILutraDbContext> _contextMock;
     private readonly UpdateVerspakket.Handler _handler;
+    private Domain.Entities.Verspakket _verspakket = null!;
 
     private const string ValidBase64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI6QAAAABJRU5ErkJggg==";
 
@@ -23,7 +24,9 @@ public class UpdateVerspakketHandlerTests
 
     private (Guid verspakketId, Guid supermarktId) SetupContext(
         List<Domain.Entities.VerspakketFoto>? existingFotos = null,
-        List<Domain.Entities.Ingredient>? existingIngredienten = null)
+        List<Domain.Entities.Ingredient>? existingIngredienten = null,
+        Domain.Entities.Voedingswaarde? existingVoedingswaarde = null,
+        List<Domain.Entities.VerspakketAllergeen>? existingAllergenen = null)
     {
         var supermarktId = Guid.NewGuid();
         var verspakketId = Guid.NewGuid();
@@ -33,7 +36,7 @@ public class UpdateVerspakketHandlerTests
             new() { Id = supermarktId, Naam = "AH", CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow }
         };
 
-        var verspakket = new Domain.Entities.Verspakket
+        _verspakket = new Domain.Entities.Verspakket
         {
             Id = verspakketId,
             Naam = "Oud Pakket",
@@ -45,15 +48,25 @@ public class UpdateVerspakketHandlerTests
         };
 
         foreach (var foto in existingFotos ?? [])
-            verspakket.AddFoto(foto);
+            _verspakket.AddFoto(foto);
 
         foreach (var ingredient in existingIngredienten ?? [])
-            verspakket.AddIngredient(ingredient);
+            _verspakket.AddIngredient(ingredient);
+
+        foreach (var allergeen in existingAllergenen ?? [])
+            _verspakket.AddAllergeen(allergeen);
+
+        _verspakket.Voedingswaarde = existingVoedingswaarde;
 
         _contextMock.Setup(c => c.Supermarkten).ReturnsDbSet(supermarkten);
-        _contextMock.Setup(c => c.Verspaketten).ReturnsDbSet(new List<Domain.Entities.Verspakket> { verspakket });
+        _contextMock.Setup(c => c.Verspaketten).ReturnsDbSet(new List<Domain.Entities.Verspakket> { _verspakket });
         _contextMock.Setup(c => c.VerspakketFotos).ReturnsDbSet(existingFotos ?? []);
         _contextMock.Setup(c => c.Ingredienten).ReturnsDbSet(existingIngredienten ?? []);
+        var voedingswaarden = new List<Domain.Entities.Voedingswaarde>();
+        if (existingVoedingswaarde is not null)
+            voedingswaarden.Add(existingVoedingswaarde);
+        _contextMock.Setup(c => c.Voedingswaarden).ReturnsDbSet(voedingswaarden);
+        _contextMock.Setup(c => c.VerspakketAllergenen).ReturnsDbSet(existingAllergenen ?? []);
         _contextMock.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
         return (verspakketId, supermarktId);
@@ -228,5 +241,176 @@ public class UpdateVerspakketHandlerTests
         var act = () => _handler.Handle(command, CancellationToken.None);
 
         await act.Should().ThrowAsync<ValidationException>();
+    }
+
+    [Fact]
+    public async Task Handle_WithVoedingswaarde_WhenNone_CreatesVoedingswaarde()
+    {
+        var (verspakketId, supermarktId) = SetupContext();
+
+        var command = new UpdateVerspakket.Command(
+            verspakketId,
+            "Pakket",
+            800,
+            2,
+            supermarktId,
+            Voedingswaarde: new Voedingswaarde
+            {
+                EnergieKj = 350,
+                EnergieKcal = 84,
+                Vetten = 2.5m,
+                WaarvanVerzadigd = 0.8m,
+                Koolhydraten = 10,
+                WaarvanSuikers = 1.5m,
+                Vezels = 3,
+                Eiwitten = 6,
+                Zout = 0.4m
+            });
+
+        await _handler.Handle(command, CancellationToken.None);
+
+        _verspakket.Voedingswaarde.Should().NotBeNull();
+        _verspakket.Voedingswaarde!.EnergieKj.Should().Be(350);
+        _verspakket.Voedingswaarde.EnergieKcal.Should().Be(84);
+        _verspakket.Voedingswaarde.Vetten.Should().Be(2.5m);
+        _verspakket.Voedingswaarde.WaarvanVerzadigd.Should().Be(0.8m);
+        _verspakket.Voedingswaarde.Koolhydraten.Should().Be(10);
+        _verspakket.Voedingswaarde.WaarvanSuikers.Should().Be(1.5m);
+        _verspakket.Voedingswaarde.Vezels.Should().Be(3);
+        _verspakket.Voedingswaarde.Eiwitten.Should().Be(6);
+        _verspakket.Voedingswaarde.Zout.Should().Be(0.4m);
+        _verspakket.Voedingswaarde.VerspakketId.Should().Be(verspakketId);
+    }
+
+    [Fact]
+    public async Task Handle_WithVoedingswaarde_WhenExisting_UpdatesVoedingswaarde()
+    {
+        var existing = new Domain.Entities.Voedingswaarde
+        {
+            Id = Guid.NewGuid(),
+            EnergieKj = 100,
+            Vetten = 1,
+            VerspakketId = Guid.NewGuid(),
+            CreatedAt = DateTime.UtcNow,
+            ModifiedAt = DateTime.UtcNow
+        };
+        var (verspakketId, supermarktId) = SetupContext(existingVoedingswaarde: existing);
+        existing.VerspakketId = verspakketId;
+
+        var command = new UpdateVerspakket.Command(
+            verspakketId,
+            "Pakket",
+            800,
+            2,
+            supermarktId,
+            Voedingswaarde: new Voedingswaarde { EnergieKj = 999, Vetten = 4 });
+
+        await _handler.Handle(command, CancellationToken.None);
+
+        _verspakket.Voedingswaarde.Should().BeSameAs(existing);
+        existing.EnergieKj.Should().Be(999);
+        existing.Vetten.Should().Be(4);
+        existing.EnergieKcal.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Handle_NullVoedingswaarde_DoesNotTouchVoedingswaarde()
+    {
+        var existing = new Domain.Entities.Voedingswaarde
+        {
+            Id = Guid.NewGuid(),
+            EnergieKj = 100,
+            VerspakketId = Guid.NewGuid(),
+            CreatedAt = DateTime.UtcNow,
+            ModifiedAt = DateTime.UtcNow
+        };
+        var (verspakketId, supermarktId) = SetupContext(existingVoedingswaarde: existing);
+        existing.VerspakketId = verspakketId;
+
+        var command = new UpdateVerspakket.Command(verspakketId, "Pakket", 800, 2, supermarktId);
+
+        await _handler.Handle(command, CancellationToken.None);
+
+        _verspakket.Voedingswaarde.Should().BeSameAs(existing);
+        existing.EnergieKj.Should().Be(100);
+    }
+
+    [Fact]
+    public async Task Handle_WithAllergenen_ReplacesAllergenen()
+    {
+        var existing = new Domain.Entities.VerspakketAllergeen
+        {
+            Id = Guid.NewGuid(),
+            Allergeen = Domain.Entities.Allergeen.Gluten,
+            VerspakketId = Guid.NewGuid(),
+            CreatedAt = DateTime.UtcNow,
+            ModifiedAt = DateTime.UtcNow
+        };
+        var (verspakketId, supermarktId) = SetupContext(existingAllergenen: [existing]);
+        existing.VerspakketId = verspakketId;
+
+        List<Domain.Entities.VerspakketAllergeen>? removed = null;
+        List<Domain.Entities.VerspakketAllergeen>? added = null;
+        _contextMock
+            .Setup(c => c.VerspakketAllergenen.RemoveRange(It.IsAny<IEnumerable<Domain.Entities.VerspakketAllergeen>>()))
+            .Callback<IEnumerable<Domain.Entities.VerspakketAllergeen>>(x => removed = x.ToList());
+        _contextMock
+            .Setup(c => c.VerspakketAllergenen.AddRange(It.IsAny<IEnumerable<Domain.Entities.VerspakketAllergeen>>()))
+            .Callback<IEnumerable<Domain.Entities.VerspakketAllergeen>>(x => added = x.ToList());
+
+        var command = new UpdateVerspakket.Command(
+            verspakketId,
+            "Pakket",
+            800,
+            2,
+            supermarktId,
+            Allergenen: [Domain.Entities.Allergeen.Melk, Domain.Entities.Allergeen.Pinda]);
+
+        await _handler.Handle(command, CancellationToken.None);
+
+        removed.Should().NotBeNull();
+        removed!.Should().ContainSingle().Which.Allergeen.Should().Be(Domain.Entities.Allergeen.Gluten);
+
+        added.Should().NotBeNull();
+        added.Should().HaveCount(2);
+        added.Should().OnlyContain(a => a.VerspakketId == verspakketId);
+        added!.Select(a => a.Allergeen).Should().BeEquivalentTo(new[]
+        {
+            Domain.Entities.Allergeen.Melk,
+            Domain.Entities.Allergeen.Pinda
+        });
+    }
+
+    [Fact]
+    public async Task Handle_NullAllergenen_DoesNotTouchAllergenen()
+    {
+        var (verspakketId, supermarktId) = SetupContext();
+
+        var command = new UpdateVerspakket.Command(verspakketId, "Pakket", 800, 3, supermarktId);
+
+        await _handler.Handle(command, CancellationToken.None);
+
+        _contextMock.Verify(
+            c => c.VerspakketAllergenen.RemoveRange(It.IsAny<IEnumerable<Domain.Entities.VerspakketAllergeen>>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task Handle_WaarvanSuikersGreaterThanKoolhydraten_ThrowsValidationException()
+    {
+        var (verspakketId, supermarktId) = SetupContext();
+
+        var command = new UpdateVerspakket.Command(
+            verspakketId,
+            "Pakket",
+            800,
+            2,
+            supermarktId,
+            Voedingswaarde: new Voedingswaarde { Koolhydraten = 1, WaarvanSuikers = 2 });
+
+        var act = () => _handler.Handle(command, CancellationToken.None);
+
+        await act.Should().ThrowAsync<ValidationException>()
+            .WithMessage("WaarvanSuikers mag niet groter zijn dan Koolhydraten.");
     }
 }

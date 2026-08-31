@@ -49,6 +49,23 @@ namespace Lutra.Application.Verspakketten;
                                             i.Hoeveelheid,
                                             i.Eenheid,
                                             i.Inbegrepen))
+                                        .ToArray(),
+                                    Voedingswaarde = v.Voedingswaarde == null
+                                        ? null
+                                        : new Voedingswaarde
+                                        {
+                                            EnergieKj = v.Voedingswaarde.EnergieKj,
+                                            EnergieKcal = v.Voedingswaarde.EnergieKcal,
+                                            Vetten = v.Voedingswaarde.Vetten,
+                                            WaarvanVerzadigd = v.Voedingswaarde.WaarvanVerzadigd,
+                                            Koolhydraten = v.Voedingswaarde.Koolhydraten,
+                                            WaarvanSuikers = v.Voedingswaarde.WaarvanSuikers,
+                                            Vezels = v.Voedingswaarde.Vezels,
+                                            Eiwitten = v.Voedingswaarde.Eiwitten,
+                                            Zout = v.Voedingswaarde.Zout
+                                        },
+                                    Allergenen = v.Allergenen
+                                        .Select(a => a.Allergeen)
                                         .ToArray()
                                 })
                                 .SingleOrDefaultAsync(cancellationToken);

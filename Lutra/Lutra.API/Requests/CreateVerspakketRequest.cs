@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Lutra.Domain.Entities;
 
 namespace Lutra.API.Requests;
 
@@ -12,4 +13,6 @@ public sealed record CreateVerspakketRequest(
     [Required] Guid SupermarktId,
     AddBeoordelingRequest? Beoordeling = null,
     IReadOnlyList<VerspakketFotoRequest>? Fotos = null,
-    IReadOnlyList<IngredientRequest>? Ingredienten = null);
+    IReadOnlyList<IngredientRequest>? Ingredienten = null,
+    VoedingswaardeRequest? Voedingswaarde = null,
+    IReadOnlyList<Domain.Entities.Allergeen>? Allergenen = null);

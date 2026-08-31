@@ -1,5 +1,16 @@
 # Changelog
 
+## 31 August 2026
+
+- Reworked the migrator seeding into `LutraSeeder`, which now reconciles on every run instead of only seeding supermarkten into an empty table: the four supermarkten are upserted by name and the new seeded verspakket `Jumbo Satépannetje Gesneden Verspakket 4 Personen` (Jumbo, €7.49, 4 personen) is upserted by name, re-applying its scalars, voedingswaarde (per 100 g: 476 kJ/113 kcal, 3.8 g vetten/0.7 g verzadigd, 13.3 g koolhydraten/2.7 g suikers, 1.3 g vezels, 5.8 g eiwitten, 0.34 g zout), six ingredients (package percentages of the 1430 g pack converted to grams) and its four allergenen (gluten, melk, pinda, sesam), so whenever a relevant entity changes, the next migrator run refreshes the seed. Verified with a scratch SQLite harness covering both the fresh-seed and reconcile paths.
+
+- Added nutrition and allergen information to `Verspakket`: a new optional one-to-one `Voedingswaarde` entity holds the standard Dutch/EU nutrition label fields (energie in kJ and kcal, vetten met waarvan verzadigd, koolhydraten met waarvan suikers, vezels, eiwitten en zout, all optional grams/energy decimals), and a new `VerspakketAllergeen` child entity stores allergens from a 14-value `Allergeen` enum covering the EU-mandatory allergens (gluten, schaaldieren, eieren, vis, pinda, soja, melk, noten, selderij, mosterd, sesam, sulfieten, lupine, weekdieren).
+- Create and update verspakket flows accept `Voedingswaarde` and `Allergenen` (create attaches, update upserts voedingswaarde and replaces allergenen when supplied, untouched when null), with handler validation for negative values, subset rules (waarvan verzadigd <= vetten, waarvan suikers <= koolhydraten), invalid allergen values, and duplicate allergens. The detail endpoint returns both; a new `AddVoedingswaardeEnAllergenen` migration adds the two tables with unique FK/index and check constraints (subset checks use CAST to NUMERIC so they stay numeric under the SQLite-backed integration tests).
+
+## 30 August 2026
+
+- Fixed a missing `20260425120000_AddVerspakketFotos.Designer.cs` migration designer file. Because EF Core discovers migrations through the `[Migration]` attribute in the designer file, the `AddVerspakketFotos` migration was never discovered, so the `VerspakketFotos` table was never created and later foto migrations failed with `42P01: relation "VerspakketFotos" does not exist`. Recreated the designer file and applied the pending migrations to the `LutraDb` database.
+
 ## 25 August 2026
 
 - Installed 6 project-relevant skills globally via `npx skills`: `modern-csharp-coding-standards`, `dotnet-10-csharp-14`, `code-testing-agent`, `aspire-integration-testing`, `dotnet-testing-strategy`, and `postgresql`. The `mcp-csharp-test` skill could not be installed because it no longer exists in the `dotnet/skills` repository.

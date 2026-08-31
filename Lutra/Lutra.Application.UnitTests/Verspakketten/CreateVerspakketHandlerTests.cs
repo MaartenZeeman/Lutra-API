@@ -162,4 +162,131 @@ public class CreateVerspakketHandlerTests
         beoordeling.Aanbevolen.Should().BeTrue();
         beoordeling.Tekst.Should().Be("Lekker");
     }
+
+    [Fact]
+    public async Task Handle_WithVoedingswaardeEnAllergenen_CreatesVerspakketWithThem()
+    {
+        var supermarktId = Guid.NewGuid();
+        var supermarkten = new List<Domain.Entities.Supermarkt>
+        {
+            new() { Id = supermarktId, Naam = "Jumbo", CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow }
+        };
+
+        Domain.Entities.Verspakket? savedVerspakket = null;
+        _contextMock.Setup(c => c.Supermarkten).ReturnsDbSet(supermarkten);
+        _contextMock.Setup(c => c.Verspaketten).ReturnsDbSet(new List<Domain.Entities.Verspakket>());
+        _contextMock
+            .Setup(c => c.Verspaketten.AddAsync(It.IsAny<Domain.Entities.Verspakket>(), It.IsAny<CancellationToken>()))
+            .Callback<Domain.Entities.Verspakket, CancellationToken>((v, _) => savedVerspakket = v);
+        _contextMock.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+        var command = new CreateVerspakket.Command(
+            "Pasta Pesto",
+            899,
+            2,
+            supermarktId,
+            null,
+            Voedingswaarde: new Voedingswaarde
+            {
+                EnergieKj = 520,
+                EnergieKcal = 124,
+                Vetten = 4.5m,
+                WaarvanVerzadigd = 1.2m,
+                Koolhydraten = 14,
+                WaarvanSuikers = 2.1m,
+                Vezels = 2.4m,
+                Eiwitten = 5.8m,
+                Zout = 0.35m
+            },
+            Allergenen: [Domain.Entities.Allergeen.Gluten, Domain.Entities.Allergeen.Melk, Domain.Entities.Allergeen.Pinda]);
+
+        await _handler.Handle(command, CancellationToken.None);
+
+        savedVerspakket.Should().NotBeNull();
+        savedVerspakket!.Voedingswaarde.Should().NotBeNull();
+        savedVerspakket.Voedingswaarde!.EnergieKj.Should().Be(520);
+        savedVerspakket.Voedingswaarde.EnergieKcal.Should().Be(124);
+        savedVerspakket.Voedingswaarde.Vetten.Should().Be(4.5m);
+        savedVerspakket.Voedingswaarde.WaarvanVerzadigd.Should().Be(1.2m);
+        savedVerspakket.Voedingswaarde.Koolhydraten.Should().Be(14);
+        savedVerspakket.Voedingswaarde.WaarvanSuikers.Should().Be(2.1m);
+        savedVerspakket.Voedingswaarde.Vezels.Should().Be(2.4m);
+        savedVerspakket.Voedingswaarde.Eiwitten.Should().Be(5.8m);
+        savedVerspakket.Voedingswaarde.Zout.Should().Be(0.35m);
+        savedVerspakket.Allergenen.Select(a => a.Allergeen).Should().BeEquivalentTo(new[]
+        {
+            Domain.Entities.Allergeen.Gluten,
+            Domain.Entities.Allergeen.Melk,
+            Domain.Entities.Allergeen.Pinda
+        });
+    }
+
+    [Fact]
+    public async Task Handle_WaarvanVerzadigdGreaterThanVetten_ThrowsValidationException()
+    {
+        var supermarktId = Guid.NewGuid();
+        _contextMock.Setup(c => c.Supermarkten).ReturnsDbSet(
+        [
+            new() { Id = supermarktId, Naam = "Jumbo", CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow }
+        ]);
+
+        var command = new CreateVerspakket.Command(
+            "Pasta Pesto",
+            899,
+            2,
+            supermarktId,
+            null,
+            Voedingswaarde: new Voedingswaarde { Vetten = 2, WaarvanVerzadigd = 3 });
+
+        var act = () => _handler.Handle(command, CancellationToken.None);
+
+        await act.Should().ThrowAsync<ValidationException>()
+            .WithMessage("WaarvanVerzadigd mag niet groter zijn dan Vetten.");
+    }
+
+    [Fact]
+    public async Task Handle_WaarvanSuikersGreaterThanKoolhydraten_ThrowsValidationException()
+    {
+        var supermarktId = Guid.NewGuid();
+        _contextMock.Setup(c => c.Supermarkten).ReturnsDbSet(
+        [
+            new() { Id = supermarktId, Naam = "Jumbo", CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow }
+        ]);
+
+        var command = new CreateVerspakket.Command(
+            "Pasta Pesto",
+            899,
+            2,
+            supermarktId,
+            null,
+            Voedingswaarde: new Voedingswaarde { Koolhydraten = 1, WaarvanSuikers = 2 });
+
+        var act = () => _handler.Handle(command, CancellationToken.None);
+
+        await act.Should().ThrowAsync<ValidationException>()
+            .WithMessage("WaarvanSuikers mag niet groter zijn dan Koolhydraten.");
+    }
+
+    [Fact]
+    public async Task Handle_WithDuplicateAllergenen_ThrowsValidationException()
+    {
+        var supermarktId = Guid.NewGuid();
+        _contextMock.Setup(c => c.Supermarkten).ReturnsDbSet(
+        [
+            new() { Id = supermarktId, Naam = "Jumbo", CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow }
+        ]);
+
+        var command = new CreateVerspakket.Command(
+            "Pasta Pesto",
+            899,
+            2,
+            supermarktId,
+            null,
+            Allergenen: [Domain.Entities.Allergeen.Melk, Domain.Entities.Allergeen.Melk]);
+
+        var act = () => _handler.Handle(command, CancellationToken.None);
+
+        await act.Should().ThrowAsync<ValidationException>()
+            .WithMessage("Allergenen mogen niet dubbel voorkomen.");
+    }
 }

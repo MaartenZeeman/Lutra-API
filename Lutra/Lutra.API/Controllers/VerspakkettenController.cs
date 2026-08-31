@@ -76,7 +76,9 @@ public class VerspakkettenController(IMediator mediator) : ControllerBase
             request.SupermarktId,
             MapBeoordeling(request.Beoordeling),
             MapFotos(request.Fotos),
-            MapIngredienten(request.Ingredienten));
+            MapIngredienten(request.Ingredienten),
+            MapVoedingswaarde(request.Voedingswaarde),
+            request.Allergenen);
 
         var result = await mediator.SendCommandAsync<CreateVerspakket.Command, CreateVerspakket.Response>(command, cancellationToken);
 
@@ -106,7 +108,9 @@ public class VerspakkettenController(IMediator mediator) : ControllerBase
             request.AantalPersonen,
             request.SupermarktId,
             MapFotos(request.Fotos),
-            MapIngredienten(request.Ingredienten));
+            MapIngredienten(request.Ingredienten),
+            MapVoedingswaarde(request.Voedingswaarde),
+            request.Allergenen);
 
         await mediator.SendCommandAsync<UpdateVerspakket.Command, UpdateVerspakket.Response>(command, cancellationToken);
 
@@ -147,4 +151,20 @@ public class VerspakkettenController(IMediator mediator) : ControllerBase
 
     private static List<Ingredient>? MapIngredienten(IReadOnlyList<IngredientRequest>? ingredienten) =>
         ingredienten?.Select(i => new Ingredient(i.Naam, i.Hoeveelheid, i.Eenheid, i.Inbegrepen)).ToList();
+
+    private static Voedingswaarde? MapVoedingswaarde(VoedingswaardeRequest? voedingswaarde) =>
+        voedingswaarde is null
+            ? null
+            : new Voedingswaarde
+            {
+                EnergieKj = voedingswaarde.EnergieKj,
+                EnergieKcal = voedingswaarde.EnergieKcal,
+                Vetten = voedingswaarde.Vetten,
+                WaarvanVerzadigd = voedingswaarde.WaarvanVerzadigd,
+                Koolhydraten = voedingswaarde.Koolhydraten,
+                WaarvanSuikers = voedingswaarde.WaarvanSuikers,
+                Vezels = voedingswaarde.Vezels,
+                Eiwitten = voedingswaarde.Eiwitten,
+                Zout = voedingswaarde.Zout
+            };
 }

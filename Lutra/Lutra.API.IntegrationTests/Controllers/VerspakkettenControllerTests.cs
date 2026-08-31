@@ -399,4 +399,120 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
         created!.Verspakket.Ingredienten.Should().ContainSingle();
         created.Verspakket.Ingredienten!.Single().Naam.Should().Be("Olijfolie");
     }
+
+    // ── Voedingswaarde & allergenen ───────────────────────────────────────────
+
+    [Fact]
+    public async Task Post_CreatesVerspakket_WithVoedingswaardeEnAllergenen()
+    {
+        var supermarkt = await SeedAsync(new Supermarkt
+        {
+            Id = Guid.NewGuid(), Naam = "Picnic",
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        });
+
+        var request = new CreateVerspakketRequest(
+            "Pasta Pesto",
+            899,
+            2,
+            supermarkt.Id,
+            Voedingswaarde: new VoedingswaardeRequest(520, 124, 4.5m, 1.2m, 14, 2.1m, 2.4m, 5.8m, 0.35m),
+            Allergenen: [Allergeen.Gluten, Allergeen.Melk, Allergeen.Pinda]);
+
+        var response = await Client.PostAsJsonAsync("/api/verspakketten", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var body = await response.Content.ReadFromJsonAsync<CreateVerspakket.Response>();
+
+        var created = await Client.GetFromJsonAsync<GetVerspakket.Response>($"/api/verspakketten/{body!.Id}");
+        created!.Verspakket.Voedingswaarde.Should().NotBeNull();
+        created.Verspakket.Voedingswaarde!.EnergieKj.Should().Be(520);
+        created.Verspakket.Voedingswaarde.EnergieKcal.Should().Be(124);
+        created.Verspakket.Voedingswaarde.Vetten.Should().Be(4.5m);
+        created.Verspakket.Voedingswaarde.WaarvanVerzadigd.Should().Be(1.2m);
+        created.Verspakket.Voedingswaarde.Koolhydraten.Should().Be(14);
+        created.Verspakket.Voedingswaarde.WaarvanSuikers.Should().Be(2.1m);
+        created.Verspakket.Voedingswaarde.Vezels.Should().Be(2.4m);
+        created.Verspakket.Voedingswaarde.Eiwitten.Should().Be(5.8m);
+        created.Verspakket.Voedingswaarde.Zout.Should().Be(0.35m);
+        created.Verspakket.Allergenen.Should().BeEquivalentTo(new[]
+        {
+            Allergeen.Gluten,
+            Allergeen.Melk,
+            Allergeen.Pinda
+        });
+    }
+
+    [Fact]
+    public async Task Post_ReturnsBadRequest_WhenWaarvanVerzadigdGreaterThanVetten()
+    {
+        var supermarkt = await SeedAsync(new Supermarkt
+        {
+            Id = Guid.NewGuid(), Naam = "Picnic",
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        });
+
+        var request = new CreateVerspakketRequest(
+            "Pasta Pesto",
+            899,
+            2,
+            supermarkt.Id,
+            Voedingswaarde: new VoedingswaardeRequest(null, null, 2, 3, null, null, null, null, null));
+
+        var response = await Client.PostAsJsonAsync("/api/verspakketten", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Update_ReplacesAllergenen_EnUpdatesVoedingswaarde()
+    {
+        var supermarkt = await SeedAsync(new Supermarkt
+        {
+            Id = Guid.NewGuid(), Naam = "AH",
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        });
+        var verspakket = new Verspakket
+        {
+            Id = Guid.NewGuid(), Naam = "Pakket", AantalPersonen = 2,
+            SupermarktId = supermarkt.Id,
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        };
+        verspakket.Voedingswaarde = new Voedingswaarde
+        {
+            Id = Guid.NewGuid(),
+            EnergieKj = 100,
+            Vetten = 1,
+            VerspakketId = verspakket.Id,
+            CreatedAt = DateTime.UtcNow,
+            ModifiedAt = DateTime.UtcNow
+        };
+        verspakket.AddAllergeen(new VerspakketAllergeen
+        {
+            Id = Guid.NewGuid(),
+            Allergeen = Allergeen.Gluten,
+            VerspakketId = verspakket.Id,
+            CreatedAt = DateTime.UtcNow,
+            ModifiedAt = DateTime.UtcNow
+        });
+        await SeedAsync(verspakket);
+
+        var request = new UpdateVerspakketRequest(
+            "Pakket",
+            999,
+            2,
+            supermarkt.Id,
+            Voedingswaarde: new VoedingswaardeRequest(520, 124, null, null, null, null, null, null, null),
+            Allergenen: [Allergeen.Melk]);
+
+        var response = await Client.PutAsJsonAsync($"/api/verspakketten/{verspakket.Id}", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var created = await Client.GetFromJsonAsync<GetVerspakket.Response>($"/api/verspakketten/{verspakket.Id}");
+        created!.Verspakket.Voedingswaarde.Should().NotBeNull();
+        created.Verspakket.Voedingswaarde!.EnergieKj.Should().Be(520);
+        created.Verspakket.Voedingswaarde.Vetten.Should().BeNull();
+        created.Verspakket.Allergenen.Should().BeEquivalentTo(new[] { Allergeen.Melk });
+    }
 }

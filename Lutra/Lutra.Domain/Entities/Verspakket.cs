@@ -7,6 +7,7 @@ public class Verspakket : BaseEntity
     private readonly List<Beoordeling> _beoordelingen = [];
     private readonly List<VerspakketFoto> _fotos = [];
     private readonly List<Ingredient> _ingredienten = [];
+    private readonly List<VerspakketAllergeen> _allergenen = [];
 
     [MaxLength(50)]
     public required string Naam { get; set; }
@@ -21,11 +22,15 @@ public class Verspakket : BaseEntity
 
     public virtual Supermarkt Supermarkt { get; set; } = null!;
 
+    public Voedingswaarde? Voedingswaarde { get; set; }
+
     public IReadOnlyCollection<Beoordeling> Beoordelingen => _beoordelingen.AsReadOnly();
 
     public IReadOnlyCollection<VerspakketFoto> Fotos => _fotos.AsReadOnly();
 
     public IReadOnlyCollection<Ingredient> Ingredienten => _ingredienten.AsReadOnly();
+
+    public IReadOnlyCollection<VerspakketAllergeen> Allergenen => _allergenen.AsReadOnly();
 
     public void AddBeoordeling(Beoordeling beoordeling)
     {
@@ -40,6 +45,11 @@ public class Verspakket : BaseEntity
     public void AddIngredient(Ingredient ingredient)
     {
         _ingredienten.Add(ingredient);
+    }
+
+    public void AddAllergeen(VerspakketAllergeen allergeen)
+    {
+        _allergenen.Add(allergeen);
     }
 
     public bool RemoveBeoordeling(Guid id)

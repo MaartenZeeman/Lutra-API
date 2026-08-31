@@ -13,6 +13,10 @@ public interface ILutraDbContext
 
     DbSet<Ingredient> Ingredienten { get; }
 
+    DbSet<Voedingswaarde> Voedingswaarden { get; }
+
+    DbSet<VerspakketAllergeen> VerspakketAllergenen { get; }
+
     DbSet<Verspakket> Verspaketten { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);

@@ -12,5 +12,7 @@ public sealed partial class CreateVerspakket
         Guid SupermarktId,
         Beoordeling? Beoordeling,
         IReadOnlyList<VerspakketFoto>? Fotos = null,
-        IReadOnlyList<Ingredient>? Ingredienten = null) : ICommand<Response>;
+        IReadOnlyList<Ingredient>? Ingredienten = null,
+        Voedingswaarde? Voedingswaarde = null,
+        IReadOnlyList<Domain.Entities.Allergeen>? Allergenen = null) : ICommand<Response>;
 }

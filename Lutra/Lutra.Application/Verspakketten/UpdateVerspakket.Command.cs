@@ -15,5 +15,7 @@ public sealed partial class UpdateVerspakket
         int AantalPersonen,
         Guid SupermarktId,
         IReadOnlyList<VerspakketFoto>? Fotos = null,
-        IReadOnlyList<Ingredient>? Ingredienten = null) : ICommand<Response>;
+        IReadOnlyList<Ingredient>? Ingredienten = null,
+        Voedingswaarde? Voedingswaarde = null,
+        IReadOnlyList<Domain.Entities.Allergeen>? Allergenen = null) : ICommand<Response>;
 }

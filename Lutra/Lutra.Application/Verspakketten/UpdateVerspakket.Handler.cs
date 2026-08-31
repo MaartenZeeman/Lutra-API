@@ -1,6 +1,7 @@
 using Cortex.Mediator.Commands;
 using Lutra.Application.Exceptions;
 using Lutra.Application.Interfaces;
+using Lutra.Application.Models.Verspakketten;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lutra.Application.Verspakketten;
@@ -50,9 +51,27 @@ public sealed partial class UpdateVerspakket
                 }
             }
 
+            if (request.Voedingswaarde is not null)
+            {
+                ValidateVoedingswaarde(request.Voedingswaarde);
+            }
+
+            if (request.Allergenen is not null)
+            {
+                foreach (var allergeen in request.Allergenen)
+                {
+                    if (!Enum.IsDefined(allergeen))
+                        throw new ValidationException("Allergeen is geen geldige waarde.");
+                }
+
+                if (request.Allergenen.Count != request.Allergenen.Distinct().Count())
+                    throw new ValidationException("Allergenen mogen niet dubbel voorkomen.");
+            }
+
             var verspakket = await context.Verspaketten
                 .Include(v => v.Fotos)
                 .Include(v => v.Ingredienten)
+                .Include(v => v.Voedingswaarde)
                 .FirstOrDefaultAsync(v => v.Id == request.Id && v.DeletedAt == null, cancellationToken);
 
             if (verspakket is null)
@@ -127,9 +146,104 @@ public sealed partial class UpdateVerspakket
                 context.Ingredienten.AddRange(ingredienten);
             }
 
+            if (request.Voedingswaarde is not null)
+            {
+                if (verspakket.Voedingswaarde is null)
+                {
+                    verspakket.Voedingswaarde = new Domain.Entities.Voedingswaarde
+                    {
+                        Id = Guid.NewGuid(),
+                        EnergieKj = request.Voedingswaarde.EnergieKj,
+                        EnergieKcal = request.Voedingswaarde.EnergieKcal,
+                        Vetten = request.Voedingswaarde.Vetten,
+                        WaarvanVerzadigd = request.Voedingswaarde.WaarvanVerzadigd,
+                        Koolhydraten = request.Voedingswaarde.Koolhydraten,
+                        WaarvanSuikers = request.Voedingswaarde.WaarvanSuikers,
+                        Vezels = request.Voedingswaarde.Vezels,
+                        Eiwitten = request.Voedingswaarde.Eiwitten,
+                        Zout = request.Voedingswaarde.Zout,
+                        VerspakketId = verspakket.Id,
+                        CreatedAt = DateTime.UtcNow,
+                        ModifiedAt = DateTime.UtcNow
+                    };
+                }
+                else
+                {
+                    var voedingswaarde = verspakket.Voedingswaarde;
+                    voedingswaarde.EnergieKj = request.Voedingswaarde.EnergieKj;
+                    voedingswaarde.EnergieKcal = request.Voedingswaarde.EnergieKcal;
+                    voedingswaarde.Vetten = request.Voedingswaarde.Vetten;
+                    voedingswaarde.WaarvanVerzadigd = request.Voedingswaarde.WaarvanVerzadigd;
+                    voedingswaarde.Koolhydraten = request.Voedingswaarde.Koolhydraten;
+                    voedingswaarde.WaarvanSuikers = request.Voedingswaarde.WaarvanSuikers;
+                    voedingswaarde.Vezels = request.Voedingswaarde.Vezels;
+                    voedingswaarde.Eiwitten = request.Voedingswaarde.Eiwitten;
+                    voedingswaarde.Zout = request.Voedingswaarde.Zout;
+                }
+            }
+
+            if (request.Allergenen is not null)
+            {
+                // Replace all existing allergenen
+                context.VerspakketAllergenen.RemoveRange(
+                    await context.VerspakketAllergenen
+                        .Where(a => a.VerspakketId == request.Id)
+                        .ToListAsync(cancellationToken));
+
+                var now = DateTime.UtcNow;
+                var allergenen = request.Allergenen
+                    .Select(a => new Domain.Entities.VerspakketAllergeen
+                    {
+                        Id = Guid.NewGuid(),
+                        Allergeen = a,
+                        VerspakketId = verspakket.Id,
+                        CreatedAt = now,
+                        ModifiedAt = now
+                    })
+                    .ToList();
+
+                context.VerspakketAllergenen.AddRange(allergenen);
+            }
+
             await context.SaveChangesAsync(cancellationToken);
 
             return new Response();
+        }
+
+        private static void ValidateVoedingswaarde(Voedingswaarde voedingswaarde)
+        {
+            if (voedingswaarde.EnergieKj is < 0)
+                throw new ValidationException("EnergieKj mag niet negatief zijn.");
+
+            if (voedingswaarde.EnergieKcal is < 0)
+                throw new ValidationException("EnergieKcal mag niet negatief zijn.");
+
+            if (voedingswaarde.Vetten is < 0)
+                throw new ValidationException("Vetten mag niet negatief zijn.");
+
+            if (voedingswaarde.WaarvanVerzadigd is < 0)
+                throw new ValidationException("WaarvanVerzadigd mag niet negatief zijn.");
+
+            if (voedingswaarde.Koolhydraten is < 0)
+                throw new ValidationException("Koolhydraten mag niet negatief zijn.");
+
+            if (voedingswaarde.WaarvanSuikers is < 0)
+                throw new ValidationException("WaarvanSuikers mag niet negatief zijn.");
+
+            if (voedingswaarde.Vezels is < 0)
+                throw new ValidationException("Vezels mag niet negatief zijn.");
+
+            if (voedingswaarde.Eiwitten is < 0)
+                throw new ValidationException("Eiwitten mag niet negatief zijn.");
+
+            if (voedingswaarde.Zout is < 0)
+                throw new ValidationException("Zout mag niet negatief zijn.");
+
+            if (voedingswaarde.WaarvanVerzadigd > voedingswaarde.Vetten)
+                throw new ValidationException("WaarvanVerzadigd mag niet groter zijn dan Vetten.");
+
+            if (voedingswaarde.WaarvanSuikers > voedingswaarde.Koolhydraten)
+                throw new ValidationException("WaarvanSuikers mag niet groter zijn dan Koolhydraten.");
         }
     }
 }
