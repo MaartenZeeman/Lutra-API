@@ -50,20 +50,21 @@ namespace Lutra.Application.Verspakketten;
                                             i.Eenheid,
                                             i.Inbegrepen))
                                         .ToArray(),
-                                    Voedingswaarde = v.Voedingswaarde == null
-                                        ? null
-                                        : new Voedingswaarde
+                                    Voedingswaarden = v.Voedingswaarden
+                                        .Select(w => new Voedingswaarde
                                         {
-                                            EnergieKj = v.Voedingswaarde.EnergieKj,
-                                            EnergieKcal = v.Voedingswaarde.EnergieKcal,
-                                            Vetten = v.Voedingswaarde.Vetten,
-                                            WaarvanVerzadigd = v.Voedingswaarde.WaarvanVerzadigd,
-                                            Koolhydraten = v.Voedingswaarde.Koolhydraten,
-                                            WaarvanSuikers = v.Voedingswaarde.WaarvanSuikers,
-                                            Vezels = v.Voedingswaarde.Vezels,
-                                            Eiwitten = v.Voedingswaarde.Eiwitten,
-                                            Zout = v.Voedingswaarde.Zout
-                                        },
+                                            Basis = w.Basis,
+                                            EnergieKj = w.EnergieKj,
+                                            EnergieKcal = w.EnergieKcal,
+                                            Vetten = w.Vetten,
+                                            WaarvanVerzadigd = w.WaarvanVerzadigd,
+                                            Koolhydraten = w.Koolhydraten,
+                                            WaarvanSuikers = w.WaarvanSuikers,
+                                            Vezels = w.Vezels,
+                                            Eiwitten = w.Eiwitten,
+                                            Zout = w.Zout
+                                        })
+                                        .ToArray(),
                                     Allergenen = v.Allergenen
                                         .Select(a => a.Allergeen)
                                         .ToArray()

@@ -77,7 +77,7 @@ public class VerspakkettenController(IMediator mediator) : ControllerBase
             MapBeoordeling(request.Beoordeling),
             MapFotos(request.Fotos),
             MapIngredienten(request.Ingredienten),
-            MapVoedingswaarde(request.Voedingswaarde),
+            MapVoedingswaarden(request.Voedingswaarden),
             request.Allergenen);
 
         var result = await mediator.SendCommandAsync<CreateVerspakket.Command, CreateVerspakket.Response>(command, cancellationToken);
@@ -109,7 +109,7 @@ public class VerspakkettenController(IMediator mediator) : ControllerBase
             request.SupermarktId,
             MapFotos(request.Fotos),
             MapIngredienten(request.Ingredienten),
-            MapVoedingswaarde(request.Voedingswaarde),
+            MapVoedingswaarden(request.Voedingswaarden),
             request.Allergenen);
 
         await mediator.SendCommandAsync<UpdateVerspakket.Command, UpdateVerspakket.Response>(command, cancellationToken);
@@ -152,11 +152,11 @@ public class VerspakkettenController(IMediator mediator) : ControllerBase
     private static List<Ingredient>? MapIngredienten(IReadOnlyList<IngredientRequest>? ingredienten) =>
         ingredienten?.Select(i => new Ingredient(i.Naam, i.Hoeveelheid, i.Eenheid, i.Inbegrepen)).ToList();
 
-    private static Voedingswaarde? MapVoedingswaarde(VoedingswaardeRequest? voedingswaarde) =>
-        voedingswaarde is null
-            ? null
-            : new Voedingswaarde
+    private static List<Voedingswaarde>? MapVoedingswaarden(IReadOnlyList<VoedingswaardeRequest>? voedingswaarden) =>
+        voedingswaarden
+            ?.Select(voedingswaarde => new Voedingswaarde
             {
+                Basis = voedingswaarde.Basis,
                 EnergieKj = voedingswaarde.EnergieKj,
                 EnergieKcal = voedingswaarde.EnergieKcal,
                 Vetten = voedingswaarde.Vetten,
@@ -166,5 +166,6 @@ public class VerspakkettenController(IMediator mediator) : ControllerBase
                 Vezels = voedingswaarde.Vezels,
                 Eiwitten = voedingswaarde.Eiwitten,
                 Zout = voedingswaarde.Zout
-            };
+            })
+            .ToList();
 }

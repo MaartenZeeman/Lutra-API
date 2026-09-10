@@ -4,6 +4,8 @@ namespace Lutra.Domain.Entities;
 
 public class Voedingswaarde : BaseEntity
 {
+    public required VoedingswaardeBasis Basis { get; set; }
+
     [Range(0, double.MaxValue)]
     public decimal? EnergieKj { get; set; }
 

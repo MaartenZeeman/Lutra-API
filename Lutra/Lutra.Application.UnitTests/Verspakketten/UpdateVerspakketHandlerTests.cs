@@ -25,7 +25,7 @@ public class UpdateVerspakketHandlerTests
     private (Guid verspakketId, Guid supermarktId) SetupContext(
         List<Domain.Entities.VerspakketFoto>? existingFotos = null,
         List<Domain.Entities.Ingredient>? existingIngredienten = null,
-        Domain.Entities.Voedingswaarde? existingVoedingswaarde = null,
+        List<Domain.Entities.Voedingswaarde>? existingVoedingswaarden = null,
         List<Domain.Entities.VerspakketAllergeen>? existingAllergenen = null)
     {
         var supermarktId = Guid.NewGuid();
@@ -53,19 +53,17 @@ public class UpdateVerspakketHandlerTests
         foreach (var ingredient in existingIngredienten ?? [])
             _verspakket.AddIngredient(ingredient);
 
+        foreach (var voedingswaarde in existingVoedingswaarden ?? [])
+            _verspakket.AddVoedingswaarde(voedingswaarde);
+
         foreach (var allergeen in existingAllergenen ?? [])
             _verspakket.AddAllergeen(allergeen);
-
-        _verspakket.Voedingswaarde = existingVoedingswaarde;
 
         _contextMock.Setup(c => c.Supermarkten).ReturnsDbSet(supermarkten);
         _contextMock.Setup(c => c.Verspaketten).ReturnsDbSet(new List<Domain.Entities.Verspakket> { _verspakket });
         _contextMock.Setup(c => c.VerspakketFotos).ReturnsDbSet(existingFotos ?? []);
         _contextMock.Setup(c => c.Ingredienten).ReturnsDbSet(existingIngredienten ?? []);
-        var voedingswaarden = new List<Domain.Entities.Voedingswaarde>();
-        if (existingVoedingswaarde is not null)
-            voedingswaarden.Add(existingVoedingswaarde);
-        _contextMock.Setup(c => c.Voedingswaarden).ReturnsDbSet(voedingswaarden);
+        _contextMock.Setup(c => c.Voedingswaarden).ReturnsDbSet(existingVoedingswaarden ?? []);
         _contextMock.Setup(c => c.VerspakketAllergenen).ReturnsDbSet(existingAllergenen ?? []);
         _contextMock.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
@@ -244,95 +242,85 @@ public class UpdateVerspakketHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WithVoedingswaarde_WhenNone_CreatesVoedingswaarde()
-    {
-        var (verspakketId, supermarktId) = SetupContext();
-
-        var command = new UpdateVerspakket.Command(
-            verspakketId,
-            "Pakket",
-            800,
-            2,
-            supermarktId,
-            Voedingswaarde: new Voedingswaarde
-            {
-                EnergieKj = 350,
-                EnergieKcal = 84,
-                Vetten = 2.5m,
-                WaarvanVerzadigd = 0.8m,
-                Koolhydraten = 10,
-                WaarvanSuikers = 1.5m,
-                Vezels = 3,
-                Eiwitten = 6,
-                Zout = 0.4m
-            });
-
-        await _handler.Handle(command, CancellationToken.None);
-
-        _verspakket.Voedingswaarde.Should().NotBeNull();
-        _verspakket.Voedingswaarde!.EnergieKj.Should().Be(350);
-        _verspakket.Voedingswaarde.EnergieKcal.Should().Be(84);
-        _verspakket.Voedingswaarde.Vetten.Should().Be(2.5m);
-        _verspakket.Voedingswaarde.WaarvanVerzadigd.Should().Be(0.8m);
-        _verspakket.Voedingswaarde.Koolhydraten.Should().Be(10);
-        _verspakket.Voedingswaarde.WaarvanSuikers.Should().Be(1.5m);
-        _verspakket.Voedingswaarde.Vezels.Should().Be(3);
-        _verspakket.Voedingswaarde.Eiwitten.Should().Be(6);
-        _verspakket.Voedingswaarde.Zout.Should().Be(0.4m);
-        _verspakket.Voedingswaarde.VerspakketId.Should().Be(verspakketId);
-    }
-
-    [Fact]
-    public async Task Handle_WithVoedingswaarde_WhenExisting_UpdatesVoedingswaarde()
+    public async Task Handle_WithVoedingswaarden_ReplacesVoedingswaarden()
     {
         var existing = new Domain.Entities.Voedingswaarde
         {
             Id = Guid.NewGuid(),
+            Basis = Domain.Entities.VoedingswaardeBasis.Per100Gram,
             EnergieKj = 100,
-            Vetten = 1,
             VerspakketId = Guid.NewGuid(),
             CreatedAt = DateTime.UtcNow,
             ModifiedAt = DateTime.UtcNow
         };
-        var (verspakketId, supermarktId) = SetupContext(existingVoedingswaarde: existing);
+        var (verspakketId, supermarktId) = SetupContext(existingVoedingswaarden: [existing]);
         existing.VerspakketId = verspakketId;
 
+        List<Domain.Entities.Voedingswaarde>? removed = null;
+        List<Domain.Entities.Voedingswaarde>? added = null;
+        _contextMock
+            .Setup(c => c.Voedingswaarden.RemoveRange(It.IsAny<IEnumerable<Domain.Entities.Voedingswaarde>>()))
+            .Callback<IEnumerable<Domain.Entities.Voedingswaarde>>(x => removed = x.ToList());
+        _contextMock
+            .Setup(c => c.Voedingswaarden.AddRange(It.IsAny<IEnumerable<Domain.Entities.Voedingswaarde>>()))
+            .Callback<IEnumerable<Domain.Entities.Voedingswaarde>>(x => added = x.ToList());
+
         var command = new UpdateVerspakket.Command(
             verspakketId,
             "Pakket",
             800,
             2,
             supermarktId,
-            Voedingswaarde: new Voedingswaarde { EnergieKj = 999, Vetten = 4 });
+            Voedingswaarden:
+            [
+                new Voedingswaarde
+                {
+                    Basis = Domain.Entities.VoedingswaardeBasis.Per100Gram,
+                    EnergieKj = 476,
+                    Vetten = 3.8m
+                },
+                new Voedingswaarde
+                {
+                    Basis = Domain.Entities.VoedingswaardeBasis.PerPortie,
+                    EnergieKj = 2723,
+                    Vetten = 21.9m
+                }
+            ]);
 
         await _handler.Handle(command, CancellationToken.None);
 
-        _verspakket.Voedingswaarde.Should().BeSameAs(existing);
-        existing.EnergieKj.Should().Be(999);
-        existing.Vetten.Should().Be(4);
-        existing.EnergieKcal.Should().BeNull();
+        removed.Should().NotBeNull();
+        removed!.Should().ContainSingle().Which.Basis.Should().Be(Domain.Entities.VoedingswaardeBasis.Per100Gram);
+
+        added.Should().NotBeNull();
+        added.Should().HaveCount(2);
+        added.Should().OnlyContain(w => w.VerspakketId == verspakketId);
+        added!.Single(w => w.Basis == Domain.Entities.VoedingswaardeBasis.Per100Gram).EnergieKj.Should().Be(476);
+        added.Single(w => w.Basis == Domain.Entities.VoedingswaardeBasis.PerPortie).EnergieKj.Should().Be(2723);
     }
 
     [Fact]
-    public async Task Handle_NullVoedingswaarde_DoesNotTouchVoedingswaarde()
+    public async Task Handle_NullVoedingswaarden_DoesNotTouchVoedingswaarden()
     {
         var existing = new Domain.Entities.Voedingswaarde
         {
             Id = Guid.NewGuid(),
+            Basis = Domain.Entities.VoedingswaardeBasis.Per100Gram,
             EnergieKj = 100,
             VerspakketId = Guid.NewGuid(),
             CreatedAt = DateTime.UtcNow,
             ModifiedAt = DateTime.UtcNow
         };
-        var (verspakketId, supermarktId) = SetupContext(existingVoedingswaarde: existing);
+        var (verspakketId, supermarktId) = SetupContext(existingVoedingswaarden: [existing]);
         existing.VerspakketId = verspakketId;
 
         var command = new UpdateVerspakket.Command(verspakketId, "Pakket", 800, 2, supermarktId);
 
         await _handler.Handle(command, CancellationToken.None);
 
-        _verspakket.Voedingswaarde.Should().BeSameAs(existing);
-        existing.EnergieKj.Should().Be(100);
+        _contextMock.Verify(
+            c => c.Voedingswaarden.RemoveRange(It.IsAny<IEnumerable<Domain.Entities.Voedingswaarde>>()),
+            Times.Never);
     }
 
     [Fact]
@@ -406,7 +394,15 @@ public class UpdateVerspakketHandlerTests
             800,
             2,
             supermarktId,
-            Voedingswaarde: new Voedingswaarde { Koolhydraten = 1, WaarvanSuikers = 2 });
+            Voedingswaarden:
+            [
+                new Voedingswaarde
+                {
+                    Basis = Domain.Entities.VoedingswaardeBasis.Per100Gram,
+                    Koolhydraten = 1,
+                    WaarvanSuikers = 2
+                }
+            ]);
 
         var act = () => _handler.Handle(command, CancellationToken.None);
 

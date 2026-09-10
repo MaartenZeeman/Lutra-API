@@ -1,5 +1,10 @@
 # Changelog
 
+## 10 September 2026
+
+- Changed `Voedingswaarde` from a one-to-one into a collection on `Verspakket`, so each verspakket carries the nutrition label the way packaging prints it: one entry per basis via the new `VoedingswaardeBasis` enum (`Per100Gram` and `PerPortie`). Create/update now accept a `Voedingswaarden` list that replaces the existing entries when supplied, the detail endpoint returns them, and handlers reject more than two entries or duplicate basissen. A new `AddVoedingswaardeBasis` migration drops the unique `VerspakketId` index, adds the `Basis` column, and creates a unique `(VerspakketId, Basis)` index.
+- Updated the migrator seed so the Jumbo Satépannetje carries both nutrition entries from the packaging: per 100 g (476 kJ/113 kcal; vetten 3.8 g/verzadigd 0.7 g; koolhydraten 13.3 g/suikers 2.7 g; vezels 1.3 g; eiwitten 5.8 g; zout 0.34 g) and per portie over 572 g (2723 kJ/648 kcal; 21.9 g/3.8 g; 76.0 g/15.4 g; 7.5 g; 33.1 g; 1.94 g), reconciled on every run like the other seeded children. Verified with a scratch SQLite harness covering both the fresh-seed and reconcile paths.
+
 ## 31 August 2026
 
 - Reworked the migrator seeding into `LutraSeeder`, which now reconciles on every run instead of only seeding supermarkten into an empty table: the four supermarkten are upserted by name and the new seeded verspakket `Jumbo Satépannetje Gesneden Verspakket 4 Personen` (Jumbo, €7.49, 4 personen) is upserted by name, re-applying its scalars, voedingswaarde (per 100 g: 476 kJ/113 kcal, 3.8 g vetten/0.7 g verzadigd, 13.3 g koolhydraten/2.7 g suikers, 1.3 g vezels, 5.8 g eiwitten, 0.34 g zout), six ingredients (package percentages of the 1430 g pack converted to grams) and its four allergenen (gluten, melk, pinda, sesam), so whenever a relevant entity changes, the next migrator run refreshes the seed. Verified with a scratch SQLite harness covering both the fresh-seed and reconcile paths.

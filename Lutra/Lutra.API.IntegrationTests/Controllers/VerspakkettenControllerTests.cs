@@ -416,7 +416,11 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
             899,
             2,
             supermarkt.Id,
-            Voedingswaarde: new VoedingswaardeRequest(520, 124, 4.5m, 1.2m, 14, 2.1m, 2.4m, 5.8m, 0.35m),
+            Voedingswaarden:
+            [
+                new VoedingswaardeRequest(VoedingswaardeBasis.Per100Gram, 520, 124, 4.5m, 1.2m, 14, 2.1m, 2.4m, 5.8m, 0.35m),
+                new VoedingswaardeRequest(VoedingswaardeBasis.PerPortie, 2723, 648, 21.9m, 3.8m, 76.0m, 15.4m, 7.5m, 33.1m, 1.94m)
+            ],
             Allergenen: [Allergeen.Gluten, Allergeen.Melk, Allergeen.Pinda]);
 
         var response = await Client.PostAsJsonAsync("/api/verspakketten", request);
@@ -425,16 +429,27 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
         var body = await response.Content.ReadFromJsonAsync<CreateVerspakket.Response>();
 
         var created = await Client.GetFromJsonAsync<GetVerspakket.Response>($"/api/verspakketten/{body!.Id}");
-        created!.Verspakket.Voedingswaarde.Should().NotBeNull();
-        created.Verspakket.Voedingswaarde!.EnergieKj.Should().Be(520);
-        created.Verspakket.Voedingswaarde.EnergieKcal.Should().Be(124);
-        created.Verspakket.Voedingswaarde.Vetten.Should().Be(4.5m);
-        created.Verspakket.Voedingswaarde.WaarvanVerzadigd.Should().Be(1.2m);
-        created.Verspakket.Voedingswaarde.Koolhydraten.Should().Be(14);
-        created.Verspakket.Voedingswaarde.WaarvanSuikers.Should().Be(2.1m);
-        created.Verspakket.Voedingswaarde.Vezels.Should().Be(2.4m);
-        created.Verspakket.Voedingswaarde.Eiwitten.Should().Be(5.8m);
-        created.Verspakket.Voedingswaarde.Zout.Should().Be(0.35m);
+        created!.Verspakket.Voedingswaarden.Should().HaveCount(2);
+        var per100Gram = created.Verspakket.Voedingswaarden!.Single(w => w.Basis == VoedingswaardeBasis.Per100Gram);
+        per100Gram.EnergieKj.Should().Be(520);
+        per100Gram.EnergieKcal.Should().Be(124);
+        per100Gram.Vetten.Should().Be(4.5m);
+        per100Gram.WaarvanVerzadigd.Should().Be(1.2m);
+        per100Gram.Koolhydraten.Should().Be(14);
+        per100Gram.WaarvanSuikers.Should().Be(2.1m);
+        per100Gram.Vezels.Should().Be(2.4m);
+        per100Gram.Eiwitten.Should().Be(5.8m);
+        per100Gram.Zout.Should().Be(0.35m);
+        var perPortie = created.Verspakket.Voedingswaarden.Single(w => w.Basis == VoedingswaardeBasis.PerPortie);
+        perPortie.EnergieKj.Should().Be(2723);
+        perPortie.EnergieKcal.Should().Be(648);
+        perPortie.Vetten.Should().Be(21.9m);
+        perPortie.WaarvanVerzadigd.Should().Be(3.8m);
+        perPortie.Koolhydraten.Should().Be(76.0m);
+        perPortie.WaarvanSuikers.Should().Be(15.4m);
+        perPortie.Vezels.Should().Be(7.5m);
+        perPortie.Eiwitten.Should().Be(33.1m);
+        perPortie.Zout.Should().Be(1.94m);
         created.Verspakket.Allergenen.Should().BeEquivalentTo(new[]
         {
             Allergeen.Gluten,
@@ -457,7 +472,10 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
             899,
             2,
             supermarkt.Id,
-            Voedingswaarde: new VoedingswaardeRequest(null, null, 2, 3, null, null, null, null, null));
+            Voedingswaarden:
+            [
+                new VoedingswaardeRequest(VoedingswaardeBasis.Per100Gram, null, null, 2, 3, null, null, null, null, null)
+            ]);
 
         var response = await Client.PostAsJsonAsync("/api/verspakketten", request);
 
@@ -465,7 +483,7 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
     }
 
     [Fact]
-    public async Task Update_ReplacesAllergenen_EnUpdatesVoedingswaarde()
+    public async Task Update_ReplacesAllergenen_EnVoedingswaarden()
     {
         var supermarkt = await SeedAsync(new Supermarkt
         {
@@ -478,15 +496,16 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
             SupermarktId = supermarkt.Id,
             CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
         };
-        verspakket.Voedingswaarde = new Voedingswaarde
+        verspakket.AddVoedingswaarde(new Voedingswaarde
         {
             Id = Guid.NewGuid(),
+            Basis = VoedingswaardeBasis.Per100Gram,
             EnergieKj = 100,
             Vetten = 1,
             VerspakketId = verspakket.Id,
             CreatedAt = DateTime.UtcNow,
             ModifiedAt = DateTime.UtcNow
-        };
+        });
         verspakket.AddAllergeen(new VerspakketAllergeen
         {
             Id = Guid.NewGuid(),
@@ -502,7 +521,10 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
             999,
             2,
             supermarkt.Id,
-            Voedingswaarde: new VoedingswaardeRequest(520, 124, null, null, null, null, null, null, null),
+            Voedingswaarden:
+            [
+                new VoedingswaardeRequest(VoedingswaardeBasis.PerPortie, 2723, 648, null, null, null, null, null, null, null)
+            ],
             Allergenen: [Allergeen.Melk]);
 
         var response = await Client.PutAsJsonAsync($"/api/verspakketten/{verspakket.Id}", request);
@@ -510,9 +532,9 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         var created = await Client.GetFromJsonAsync<GetVerspakket.Response>($"/api/verspakketten/{verspakket.Id}");
-        created!.Verspakket.Voedingswaarde.Should().NotBeNull();
-        created.Verspakket.Voedingswaarde!.EnergieKj.Should().Be(520);
-        created.Verspakket.Voedingswaarde.Vetten.Should().BeNull();
+        created!.Verspakket.Voedingswaarden.Should().ContainSingle();
+        created.Verspakket.Voedingswaarden!.Single().Basis.Should().Be(VoedingswaardeBasis.PerPortie);
+        created.Verspakket.Voedingswaarden.Single().EnergieKj.Should().Be(2723);
         created.Verspakket.Allergenen.Should().BeEquivalentTo(new[] { Allergeen.Melk });
     }
 }

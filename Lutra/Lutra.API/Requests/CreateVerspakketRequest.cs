@@ -14,5 +14,5 @@ public sealed record CreateVerspakketRequest(
     AddBeoordelingRequest? Beoordeling = null,
     IReadOnlyList<VerspakketFotoRequest>? Fotos = null,
     IReadOnlyList<IngredientRequest>? Ingredienten = null,
-    VoedingswaardeRequest? Voedingswaarde = null,
+    IReadOnlyList<VoedingswaardeRequest>? Voedingswaarden = null,
     IReadOnlyList<Domain.Entities.Allergeen>? Allergenen = null);

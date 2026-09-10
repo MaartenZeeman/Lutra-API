@@ -6,7 +6,7 @@ namespace Lutra.Infrastructure.Migrator;
 
 /// <summary>
 /// Seeds the database with the known supermarkten and the Jumbo Satépannetje verspakket.
-/// Reconciles on every run: existing seeded entities are re-applied (scalars, voedingswaarde,
+/// Reconciles on every run: existing seeded entities are re-applied (scalars, voedingswaarden,
 /// ingredienten and allergenen are refreshed), so whenever a relevant entity changes,
 /// the next migrator run updates the seed again.
 /// </summary>
@@ -53,7 +53,6 @@ public static class LutraSeeder
     private static async Task UpsertSatepannetjeAsync(LutraDbContext dbContext, Supermarkt jumbo, DateTime now)
     {
         var verspakket = await dbContext.Verspaketten
-            .Include(v => v.Voedingswaarde)
             .FirstOrDefaultAsync(v => v.Naam == SatepannetjeNaam && v.DeletedAt == null);
 
         if (verspakket is null)
@@ -69,7 +68,11 @@ public static class LutraSeeder
                 ModifiedAt = now
             };
 
-            verspakket.Voedingswaarde = CreateVoedingswaarde(verspakket.Id, now);
+            foreach (var voedingswaarde in CreateVoedingswaarden(verspakket.Id, now))
+            {
+                verspakket.AddVoedingswaarde(voedingswaarde);
+            }
+
             foreach (var ingredient in CreateIngredienten(verspakket.Id, now))
             {
                 verspakket.AddIngredient(ingredient);
@@ -89,22 +92,14 @@ public static class LutraSeeder
         verspakket.AantalPersonen = SatepannetjeAantalPersonen;
         verspakket.SupermarktId = jumbo.Id;
 
-        if (verspakket.Voedingswaarde is null)
+        dbContext.Voedingswaarden.RemoveRange(
+            await dbContext.Voedingswaarden
+                .Where(w => w.VerspakketId == verspakket.Id)
+                .ToListAsync());
+
+        foreach (var voedingswaarde in CreateVoedingswaarden(verspakket.Id, now))
         {
-            verspakket.Voedingswaarde = CreateVoedingswaarde(verspakket.Id, now);
-        }
-        else
-        {
-            var voedingswaarde = verspakket.Voedingswaarde;
-            voedingswaarde.EnergieKj = 476;
-            voedingswaarde.EnergieKcal = 113;
-            voedingswaarde.Vetten = 3.8m;
-            voedingswaarde.WaarvanVerzadigd = 0.7m;
-            voedingswaarde.Koolhydraten = 13.3m;
-            voedingswaarde.WaarvanSuikers = 2.7m;
-            voedingswaarde.Vezels = 1.3m;
-            voedingswaarde.Eiwitten = 5.8m;
-            voedingswaarde.Zout = 0.34m;
+            dbContext.Voedingswaarden.Add(voedingswaarde);
         }
 
         dbContext.Ingredienten.RemoveRange(
@@ -128,24 +123,36 @@ public static class LutraSeeder
         }
     }
 
-    private static Voedingswaarde CreateVoedingswaarde(Guid verspakketId, DateTime now)
+    private static List<Voedingswaarde> CreateVoedingswaarden(Guid verspakketId, DateTime now)
     {
-        return new Voedingswaarde
-        {
-            Id = Guid.NewGuid(),
-            EnergieKj = 476,
-            EnergieKcal = 113,
-            Vetten = 3.8m,
-            WaarvanVerzadigd = 0.7m,
-            Koolhydraten = 13.3m,
-            WaarvanSuikers = 2.7m,
-            Vezels = 1.3m,
-            Eiwitten = 5.8m,
-            Zout = 0.34m,
-            VerspakketId = verspakketId,
-            CreatedAt = now,
-            ModifiedAt = now
-        };
+        // Nutrition label of the Jumbo Satépannetje, both as printed on the packaging:
+        // per 100 g (bereid product) and per portie (572 g bereid product).
+        (VoedingswaardeBasis Basis, decimal EnergieKj, decimal EnergieKcal, decimal Vetten, decimal WaarvanVerzadigd,
+            decimal Koolhydraten, decimal WaarvanSuikers, decimal Vezels, decimal Eiwitten, decimal Zout)[] waarden =
+        [
+            (VoedingswaardeBasis.Per100Gram, 476, 113, 3.8m, 0.7m, 13.3m, 2.7m, 1.3m, 5.8m, 0.34m),
+            (VoedingswaardeBasis.PerPortie, 2723, 648, 21.9m, 3.8m, 76.0m, 15.4m, 7.5m, 33.1m, 1.94m)
+        ];
+
+        return waarden
+            .Select(w => new Voedingswaarde
+            {
+                Id = Guid.NewGuid(),
+                Basis = w.Basis,
+                EnergieKj = w.EnergieKj,
+                EnergieKcal = w.EnergieKcal,
+                Vetten = w.Vetten,
+                WaarvanVerzadigd = w.WaarvanVerzadigd,
+                Koolhydraten = w.Koolhydraten,
+                WaarvanSuikers = w.WaarvanSuikers,
+                Vezels = w.Vezels,
+                Eiwitten = w.Eiwitten,
+                Zout = w.Zout,
+                VerspakketId = verspakketId,
+                CreatedAt = now,
+                ModifiedAt = now
+            })
+            .ToList();
     }
 
     private static List<Ingredient> CreateIngredienten(Guid verspakketId, DateTime now)

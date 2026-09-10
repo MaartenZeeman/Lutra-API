@@ -39,9 +39,9 @@ public sealed partial class CreateVerspakket
                 }
             }
 
-            if (request.Voedingswaarde is not null)
+            if (request.Voedingswaarden is not null)
             {
-                ValidateVoedingswaarde(request.Voedingswaarde);
+                ValidateVoedingswaarden(request.Voedingswaarden);
             }
 
             if (request.Allergenen is not null)
@@ -117,24 +117,28 @@ public sealed partial class CreateVerspakket
                 }
             }
 
-            if (request.Voedingswaarde is not null)
+            if (request.Voedingswaarden is { Count: > 0 })
             {
-                verspakket.Voedingswaarde = new Domain.Entities.Voedingswaarde
+                foreach (var voedingswaarde in request.Voedingswaarden)
                 {
-                    Id = Guid.NewGuid(),
-                    EnergieKj = request.Voedingswaarde.EnergieKj,
-                    EnergieKcal = request.Voedingswaarde.EnergieKcal,
-                    Vetten = request.Voedingswaarde.Vetten,
-                    WaarvanVerzadigd = request.Voedingswaarde.WaarvanVerzadigd,
-                    Koolhydraten = request.Voedingswaarde.Koolhydraten,
-                    WaarvanSuikers = request.Voedingswaarde.WaarvanSuikers,
-                    Vezels = request.Voedingswaarde.Vezels,
-                    Eiwitten = request.Voedingswaarde.Eiwitten,
-                    Zout = request.Voedingswaarde.Zout,
-                    VerspakketId = verspakket.Id,
-                    CreatedAt = now,
-                    ModifiedAt = now
-                };
+                    verspakket.AddVoedingswaarde(new Domain.Entities.Voedingswaarde
+                    {
+                        Id = Guid.NewGuid(),
+                        Basis = voedingswaarde.Basis,
+                        EnergieKj = voedingswaarde.EnergieKj,
+                        EnergieKcal = voedingswaarde.EnergieKcal,
+                        Vetten = voedingswaarde.Vetten,
+                        WaarvanVerzadigd = voedingswaarde.WaarvanVerzadigd,
+                        Koolhydraten = voedingswaarde.Koolhydraten,
+                        WaarvanSuikers = voedingswaarde.WaarvanSuikers,
+                        Vezels = voedingswaarde.Vezels,
+                        Eiwitten = voedingswaarde.Eiwitten,
+                        Zout = voedingswaarde.Zout,
+                        VerspakketId = verspakket.Id,
+                        CreatedAt = now,
+                        ModifiedAt = now
+                    });
+                }
             }
 
             if (request.Allergenen is { Count: > 0 })
@@ -156,6 +160,23 @@ public sealed partial class CreateVerspakket
             await context.SaveChangesAsync(cancellationToken);
 
             return new Response { Id = verspakket.Id };
+        }
+
+        private static void ValidateVoedingswaarden(IReadOnlyList<Voedingswaarde> voedingswaarden)
+        {
+            if (voedingswaarden.Count > 2)
+                throw new ValidationException("Een verspakket mag maximaal twee voedingswaarden hebben (per 100 gram en per portie).");
+
+            if (voedingswaarden.Select(w => w.Basis).Distinct().Count() != voedingswaarden.Count)
+                throw new ValidationException("Voedingswaarden mogen per basis maar één keer voorkomen.");
+
+            foreach (var voedingswaarde in voedingswaarden)
+            {
+                if (!Enum.IsDefined(voedingswaarde.Basis))
+                    throw new ValidationException("Voedingswaardebasis is geen geldige waarde.");
+
+                ValidateVoedingswaarde(voedingswaarde);
+            }
         }
 
         private static void ValidateVoedingswaarde(Voedingswaarde voedingswaarde)

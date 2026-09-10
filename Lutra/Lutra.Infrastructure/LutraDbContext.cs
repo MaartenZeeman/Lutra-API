@@ -57,9 +57,9 @@ public class LutraDbContext : DbContext, ILutraDbContext
                 .HasForeignKey(ing => ing.VerspakketId)
                 .IsRequired();
 
-            b.HasOne(v => v.Voedingswaarde)
+            b.HasMany(v => v.Voedingswaarden)
                 .WithOne(w => w.Verspakket)
-                .HasForeignKey<Voedingswaarde>(w => w.VerspakketId)
+                .HasForeignKey(w => w.VerspakketId)
                 .IsRequired();
 
             b.HasMany(v => v.Allergenen)
@@ -86,6 +86,8 @@ public class LutraDbContext : DbContext, ILutraDbContext
 
         modelBuilder.Entity<Voedingswaarde>(b =>
         {
+            b.HasIndex(w => new { w.VerspakketId, w.Basis }).IsUnique();
+
             b.Property(w => w.EnergieKj).HasPrecision(10, 2);
             b.Property(w => w.EnergieKcal).HasPrecision(10, 2);
             b.Property(w => w.Vetten).HasPrecision(10, 2);

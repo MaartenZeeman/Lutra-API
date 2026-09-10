@@ -6,6 +6,8 @@ namespace Lutra.Application.Models.Verspakketten;
 /// </summary>
 public sealed record Voedingswaarde
 {
+    public Domain.Entities.VoedingswaardeBasis Basis { get; init; }
+
     public decimal? EnergieKj { get; init; }
 
     public decimal? EnergieKcal { get; init; }

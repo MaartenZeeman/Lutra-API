@@ -51,9 +51,9 @@ public sealed partial class UpdateVerspakket
                 }
             }
 
-            if (request.Voedingswaarde is not null)
+            if (request.Voedingswaarden is not null)
             {
-                ValidateVoedingswaarde(request.Voedingswaarde);
+                ValidateVoedingswaarden(request.Voedingswaarden);
             }
 
             if (request.Allergenen is not null)
@@ -71,7 +71,7 @@ public sealed partial class UpdateVerspakket
             var verspakket = await context.Verspaketten
                 .Include(v => v.Fotos)
                 .Include(v => v.Ingredienten)
-                .Include(v => v.Voedingswaarde)
+                .Include(v => v.Voedingswaarden)
                 .FirstOrDefaultAsync(v => v.Id == request.Id && v.DeletedAt == null, cancellationToken);
 
             if (verspakket is null)
@@ -146,40 +146,36 @@ public sealed partial class UpdateVerspakket
                 context.Ingredienten.AddRange(ingredienten);
             }
 
-            if (request.Voedingswaarde is not null)
+            if (request.Voedingswaarden is not null)
             {
-                if (verspakket.Voedingswaarde is null)
-                {
-                    verspakket.Voedingswaarde = new Domain.Entities.Voedingswaarde
+                // Replace all existing voedingswaarden
+                context.Voedingswaarden.RemoveRange(
+                    await context.Voedingswaarden
+                        .Where(w => w.VerspakketId == request.Id)
+                        .ToListAsync(cancellationToken));
+
+                var now = DateTime.UtcNow;
+                var voedingswaarden = request.Voedingswaarden
+                    .Select(w => new Domain.Entities.Voedingswaarde
                     {
                         Id = Guid.NewGuid(),
-                        EnergieKj = request.Voedingswaarde.EnergieKj,
-                        EnergieKcal = request.Voedingswaarde.EnergieKcal,
-                        Vetten = request.Voedingswaarde.Vetten,
-                        WaarvanVerzadigd = request.Voedingswaarde.WaarvanVerzadigd,
-                        Koolhydraten = request.Voedingswaarde.Koolhydraten,
-                        WaarvanSuikers = request.Voedingswaarde.WaarvanSuikers,
-                        Vezels = request.Voedingswaarde.Vezels,
-                        Eiwitten = request.Voedingswaarde.Eiwitten,
-                        Zout = request.Voedingswaarde.Zout,
+                        Basis = w.Basis,
+                        EnergieKj = w.EnergieKj,
+                        EnergieKcal = w.EnergieKcal,
+                        Vetten = w.Vetten,
+                        WaarvanVerzadigd = w.WaarvanVerzadigd,
+                        Koolhydraten = w.Koolhydraten,
+                        WaarvanSuikers = w.WaarvanSuikers,
+                        Vezels = w.Vezels,
+                        Eiwitten = w.Eiwitten,
+                        Zout = w.Zout,
                         VerspakketId = verspakket.Id,
-                        CreatedAt = DateTime.UtcNow,
-                        ModifiedAt = DateTime.UtcNow
-                    };
-                }
-                else
-                {
-                    var voedingswaarde = verspakket.Voedingswaarde;
-                    voedingswaarde.EnergieKj = request.Voedingswaarde.EnergieKj;
-                    voedingswaarde.EnergieKcal = request.Voedingswaarde.EnergieKcal;
-                    voedingswaarde.Vetten = request.Voedingswaarde.Vetten;
-                    voedingswaarde.WaarvanVerzadigd = request.Voedingswaarde.WaarvanVerzadigd;
-                    voedingswaarde.Koolhydraten = request.Voedingswaarde.Koolhydraten;
-                    voedingswaarde.WaarvanSuikers = request.Voedingswaarde.WaarvanSuikers;
-                    voedingswaarde.Vezels = request.Voedingswaarde.Vezels;
-                    voedingswaarde.Eiwitten = request.Voedingswaarde.Eiwitten;
-                    voedingswaarde.Zout = request.Voedingswaarde.Zout;
-                }
+                        CreatedAt = now,
+                        ModifiedAt = now
+                    })
+                    .ToList();
+
+                context.Voedingswaarden.AddRange(voedingswaarden);
             }
 
             if (request.Allergenen is not null)
@@ -208,6 +204,23 @@ public sealed partial class UpdateVerspakket
             await context.SaveChangesAsync(cancellationToken);
 
             return new Response();
+        }
+
+        private static void ValidateVoedingswaarden(IReadOnlyList<Voedingswaarde> voedingswaarden)
+        {
+            if (voedingswaarden.Count > 2)
+                throw new ValidationException("Een verspakket mag maximaal twee voedingswaarden hebben (per 100 gram en per portie).");
+
+            if (voedingswaarden.Select(w => w.Basis).Distinct().Count() != voedingswaarden.Count)
+                throw new ValidationException("Voedingswaarden mogen per basis maar één keer voorkomen.");
+
+            foreach (var voedingswaarde in voedingswaarden)
+            {
+                if (!Enum.IsDefined(voedingswaarde.Basis))
+                    throw new ValidationException("Voedingswaardebasis is geen geldige waarde.");
+
+                ValidateVoedingswaarde(voedingswaarde);
+            }
         }
 
         private static void ValidateVoedingswaarde(Voedingswaarde voedingswaarde)

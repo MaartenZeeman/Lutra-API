@@ -22,7 +22,7 @@ public record Verspakket
 
     public Ingredient[]? Ingredienten { get; init; }
 
-    public Voedingswaarde? Voedingswaarde { get; init; }
+    public Voedingswaarde[]? Voedingswaarden { get; init; }
 
     public Domain.Entities.Allergeen[]? Allergenen { get; init; }
 
