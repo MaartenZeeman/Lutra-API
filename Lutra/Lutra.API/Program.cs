@@ -3,6 +3,7 @@ using Cortex.Mediator.DependencyInjection;
 using Lutra.API.Middleware;
 using Lutra.Application.Verspakketten;
 using Lutra.Application.Interfaces;
+using Lutra.Infrastructure.OpenRouter;
 using Lutra.Infrastructure.Sql;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
@@ -38,6 +39,14 @@ namespace Lutra.API
 
             builder.Services.AddDbContext<ILutraDbContext, LutraDbContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("LutraDb")));
+
+            builder.Services.Configure<OpenRouterOptions>(
+                builder.Configuration.GetSection(OpenRouterOptions.SectionName));
+
+            builder.Services.AddHttpClient("VerspakketRetail")
+                .ConfigurePrimaryHttpMessageHandler(() => PublicNetworkHttpHandler.Create());
+            builder.Services.AddHttpClient("OpenRouter");
+            builder.Services.AddTransient<IVerspakketProductExtractor, OpenRouterVerspakketExtractor>();
 
             builder.Services.AddControllers();
             builder.Services.AddOpenApi();

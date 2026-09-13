@@ -118,6 +118,33 @@ public class VerspakkettenController(IMediator mediator) : ControllerBase
     }
 
     /// <summary>
+    /// Imports a verspakket from a retailer product page using AI, or returns the existing
+    /// verspakket when the same product was already imported.
+    /// </summary>
+    /// <param name="request">The product page URL to import.</param>
+    /// <param name="cancellationToken">Cancellation token for the request.</param>
+    /// <returns>
+    /// Returns 201 Created with the new verspakket identifier, or 200 OK with the existing
+    /// identifier when the product was already imported.
+    /// </returns>
+    [HttpPost("import")]
+    [ProducesResponseType(typeof(ImportVerspakket.Response), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ImportVerspakket.Response), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType(StatusCodes.Status502BadGateway)]
+    public async Task<ActionResult<ImportVerspakket.Response>> Import([FromBody] ImportVerspakketRequest request, CancellationToken cancellationToken = default)
+    {
+        var result = await mediator.SendCommandAsync<ImportVerspakket.Command, ImportVerspakket.Response>(
+            new ImportVerspakket.Command(request.Url), cancellationToken);
+
+        return result.Created
+            ? CreatedAtAction(nameof(GetById), new { id = result.Id }, result)
+            : Ok(result);
+    }
+
+    /// <summary>
     /// Adds a beoordeling to an existing verspakket.
     /// </summary>
     /// <param name="id">The verspakket ID.</param>

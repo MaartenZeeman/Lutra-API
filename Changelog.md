@@ -1,5 +1,11 @@
 # Changelog
 
+## 13 September 2026
+
+- Added `POST /api/verspakketten/import`, which takes a retailer product-page URL, fetches and cleans the page, and uses a configurable OpenRouter model (`OpenRouter:Model`, default `nvidia/nemotron-3-super-120b-a12b:free`) with a strict JSON schema to extract the verspakket, its ingredients, nutrition, allergens and product photos. The new `ImportVerspakket` use case resolves the supermarket from a trusted host map or the AI name, downloads allowlisted product images, and returns the new verspakket ID (or the existing one) via the reused `CreateVerspakket` flow.
+- Added a nullable unique `BronUrl` to `Verspakket` (`AddVerspakketBronUrl` migration) so imports dedupe on the normalized source URL and backfill legacy rows matched by name and supermarket; the unique index is the final safeguard against concurrent imports. Product and image fetching is hardened against SSRF with a host allowlist and connection-time public-IP checks, bounded download sizes, and magic-byte image validation.
+- Extracted the OpenRouter/AI integration out of `Lutra.Infrastructure.Sql` into its own `Lutra.Infrastructure.OpenRouter` project (`Lutra.Infrastructure` solution folder), referencing only `Lutra.Application`. `Lutra.API` references the new project and the SQL project no longer carries the Http/Options/Logging dependencies.
+
 ## 10 September 2026
 
 - Changed `Voedingswaarde` from a one-to-one into a collection on `Verspakket`, so each verspakket carries the nutrition label the way packaging prints it: one entry per basis via the new `VoedingswaardeBasis` enum (`Per100Gram` and `PerPortie`). Create/update now accept a `Voedingswaarden` list that replaces the existing entries when supplied, the detail endpoint returns them, and handlers reject more than two entries or duplicate basissen. A new `AddVoedingswaardeBasis` migration drops the unique `VerspakketId` index, adds the `Basis` column, and creates a unique `(VerspakketId, Basis)` index.

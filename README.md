@@ -80,7 +80,25 @@ All settings can be overridden with environment variables using the `__` separat
 | Environment variable | Default | Description |
 |---|---|---|
 | `ConnectionStrings__LutraDb` | *(empty)* | Full Npgsql connection string to the PostgreSQL database |
+| `OpenRouter__ApiKey` | *(empty)* | OpenRouter API key used by the verspakket import endpoint |
+| `OpenRouter__Model` | `nvidia/nemotron-3-super-120b-a12b:free` | OpenRouter model used for product-page extraction |
+| `OpenRouter__BaseUrl` | `https://openrouter.ai/api/v1` | OpenRouter API base URL |
+| `OpenRouter__AllowedHosts__0` | `ah.nl` | Retailer host allowed for import (list, add more with increasing index) |
 | `ASPNETCORE_ENVIRONMENT` | `Production` | Set to `Development` to enable Scalar API docs at `/scalar/v1` |
+
+## Importing verspakketten
+
+`POST /api/verspakketten/import` accepts `{ "url": "https://www.ah.nl/product/..." }`. The API
+fetches the product page, extracts the details with the configured OpenRouter model, downloads the
+product photos, and stores the verspakket. It returns `201 Created` with the new ID, or `200 OK`
+with the existing ID when the same normalized source URL was already imported. Configure the API
+key with `OpenRouter__ApiKey` (never commit it).
+
+> **Security note:** The endpoint fetches user-supplied URLs. Product hosts are restricted to
+> `OpenRouter:AllowedHosts`, image hosts to `OpenRouter:AllowedImageHosts`, and all connections are
+> blocked from resolving to non-public addresses. Authentication is not yet implemented, so expose
+> this endpoint only in trusted environments.
+
 
 ## Development
 

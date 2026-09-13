@@ -26,6 +26,18 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
         {
             await WriteProblemAsync(context, StatusCodes.Status400BadRequest, ex.Message);
         }
+        catch (ConflictException ex)
+        {
+            await WriteProblemAsync(context, StatusCodes.Status409Conflict, ex.Message);
+        }
+        catch (UnprocessableException ex)
+        {
+            await WriteProblemAsync(context, StatusCodes.Status422UnprocessableEntity, ex.Message);
+        }
+        catch (ExternalServiceException ex)
+        {
+            await WriteProblemAsync(context, StatusCodes.Status502BadGateway, ex.Message);
+        }
         catch (Exception ex)
         {
             logger.LogError(ex, "Unhandled exception during request processing.");
@@ -46,6 +58,9 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
             {
                 StatusCodes.Status400BadRequest => "Bad Request",
                 StatusCodes.Status404NotFound => "Not Found",
+                StatusCodes.Status409Conflict => "Conflict",
+                StatusCodes.Status422UnprocessableEntity => "Unprocessable Entity",
+                StatusCodes.Status502BadGateway => "Bad Gateway",
                 _ => "Internal Server Error"
             },
             Detail = message

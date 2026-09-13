@@ -55,6 +55,10 @@ public class LutraApiFactory : WebApplicationFactory<Program>
             // Register SQLite using the shared open connection.
             services.AddDbContext<ILutraDbContext, LutraDbContext>(options =>
                 options.UseSqlite(_connection));
+
+            // Never call the real AI provider from integration tests.
+            services.RemoveAll<IVerspakketProductExtractor>();
+            services.AddSingleton<IVerspakketProductExtractor, FakeVerspakketProductExtractor>();
         });
 
         builder.UseEnvironment("Testing");

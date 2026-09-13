@@ -63,6 +63,7 @@ public sealed partial class CreateVerspakket
                 Naam = request.Naam,
                 PrijsInCenten = request.PrijsInCenten,
                 AantalPersonen = request.AantalPersonen,
+                BronUrl = request.BronUrl,
                 SupermarktId = request.SupermarktId,
                 CreatedAt = now,
                 ModifiedAt = now

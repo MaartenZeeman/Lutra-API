@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lutra.API.IntegrationTests"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Lutra.Infrastructure", "Lutra.Infrastructure", "{DF712D4B-6D10-CA62-6EF1-190F54D65E10}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lutra.Infrastructure.OpenRouter", "Lutra.Infrastructure.OpenRouter\Lutra.Infrastructure.OpenRouter.csproj", "{CB7E6985-594E-4DFC-990F-50968D43E220}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -127,9 +129,24 @@ Global
 		{E1B105D6-DCC2-42F5-9CB9-3A295804DCF6}.Release|x64.Build.0 = Release|Any CPU
 		{E1B105D6-DCC2-42F5-9CB9-3A295804DCF6}.Release|x86.ActiveCfg = Release|Any CPU
 		{E1B105D6-DCC2-42F5-9CB9-3A295804DCF6}.Release|x86.Build.0 = Release|Any CPU
+		{CB7E6985-594E-4DFC-990F-50968D43E220}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CB7E6985-594E-4DFC-990F-50968D43E220}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CB7E6985-594E-4DFC-990F-50968D43E220}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CB7E6985-594E-4DFC-990F-50968D43E220}.Debug|x64.Build.0 = Debug|Any CPU
+		{CB7E6985-594E-4DFC-990F-50968D43E220}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CB7E6985-594E-4DFC-990F-50968D43E220}.Debug|x86.Build.0 = Debug|Any CPU
+		{CB7E6985-594E-4DFC-990F-50968D43E220}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CB7E6985-594E-4DFC-990F-50968D43E220}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CB7E6985-594E-4DFC-990F-50968D43E220}.Release|x64.ActiveCfg = Release|Any CPU
+		{CB7E6985-594E-4DFC-990F-50968D43E220}.Release|x64.Build.0 = Release|Any CPU
+		{CB7E6985-594E-4DFC-990F-50968D43E220}.Release|x86.ActiveCfg = Release|Any CPU
+		{CB7E6985-594E-4DFC-990F-50968D43E220}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{CB7E6985-594E-4DFC-990F-50968D43E220} = {DF712D4B-6D10-CA62-6EF1-190F54D65E10}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {10018FF2-A306-4E14-B505-D2DDB10C999E}

@@ -42,6 +42,11 @@ public class LutraDbContext : DbContext, ILutraDbContext
         {
             b.HasQueryFilter(v => !v.DeletedAt.HasValue);
 
+            b.Property(v => v.BronUrl).HasMaxLength(2048);
+            b.HasIndex(v => v.BronUrl)
+                .IsUnique()
+                .HasFilter("\"BronUrl\" IS NOT NULL");
+
             b.HasMany(v => v.Beoordelingen)
                 .WithOne(beo => beo.Verspakket)
                 .HasForeignKey(beo => beo.VerspakketId)

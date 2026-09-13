@@ -14,5 +14,6 @@ public sealed partial class CreateVerspakket
         IReadOnlyList<VerspakketFoto>? Fotos = null,
         IReadOnlyList<Ingredient>? Ingredienten = null,
         IReadOnlyList<Voedingswaarde>? Voedingswaarden = null,
-        IReadOnlyList<Domain.Entities.Allergeen>? Allergenen = null) : ICommand<Response>;
+        IReadOnlyList<Domain.Entities.Allergeen>? Allergenen = null,
+        string? BronUrl = null) : ICommand<Response>;
 }

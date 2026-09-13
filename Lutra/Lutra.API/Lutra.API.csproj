@@ -23,7 +23,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Lutra.Application\Lutra.Application.csproj" />
+    <ProjectReference Include="..\Lutra.Infrastructure\Lutra.Infrastructure.Sql.csproj" />
+    <ProjectReference Include="..\Lutra.Infrastructure.OpenRouter\Lutra.Infrastructure.OpenRouter.csproj" />
   </ItemGroup>
 
 </Project>

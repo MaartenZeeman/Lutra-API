@@ -19,6 +19,9 @@ public class Verspakket : BaseEntity
     [Range(1, 10)]
     public required int AantalPersonen { get; set; }
 
+    [MaxLength(2048)]
+    public string? BronUrl { get; set; }
+
     public required Guid SupermarktId { get; set; }
 
     public virtual Supermarkt Supermarkt { get; set; } = null!;
