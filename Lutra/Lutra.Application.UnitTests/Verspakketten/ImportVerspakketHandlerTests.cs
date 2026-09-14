@@ -121,6 +121,41 @@ public class ImportVerspakketHandlerTests
     }
 
     [Fact]
+    public async Task Handle_LongProductName_TruncatesInsteadOfRejecting()
+    {
+        var supermarktId = Guid.NewGuid();
+        _contextMock.Setup(c => c.Supermarkten).ReturnsDbSet(
+        [
+            new Domain.Entities.Supermarkt
+            {
+                Id = supermarktId,
+                Naam = "Albert Heijn",
+                CreatedAt = DateTime.UtcNow,
+                ModifiedAt = DateTime.UtcNow
+            }
+        ]);
+        _contextMock.Setup(c => c.Verspaketten).ReturnsDbSet(new List<Domain.Entities.Verspakket>());
+        _contextMock.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _extractorMock
+            .Setup(e => e.ExtractAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(BuildExtracted(naam: "Jumbo Satépannetje Gesneden Verspakket 4 Personen met extra veel groenten"));
+
+        CreateVerspakket.Command? captured = null;
+        _mediatorMock
+            .Setup(m => m.SendCommandAsync<CreateVerspakket.Command, CreateVerspakket.Response>(
+                It.IsAny<CreateVerspakket.Command>(), It.IsAny<CancellationToken>()))
+            .Callback<CreateVerspakket.Command, CancellationToken>((command, _) => captured = command)
+            .ReturnsAsync(new CreateVerspakket.Response { Id = Guid.NewGuid() });
+
+        await _handler.Handle(
+            new ImportVerspakket.Command("https://www.ah.nl/product/123"),
+            CancellationToken.None);
+
+        captured.Should().NotBeNull();
+        captured!.Naam.Length.Should().BeLessThanOrEqualTo(VerspakketImportSanitizer.MaxNaamLength);
+    }
+
+    [Fact]
     public async Task Handle_UnknownSupermarkt_ThrowsValidationException()
     {
         _contextMock.Setup(c => c.Supermarkten).ReturnsDbSet(new List<Domain.Entities.Supermarkt>());

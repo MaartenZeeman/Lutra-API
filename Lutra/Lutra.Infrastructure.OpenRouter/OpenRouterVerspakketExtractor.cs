@@ -167,15 +167,25 @@ public sealed class OpenRouterVerspakketExtractor(
             throw new ExternalServiceException($"De AI-provider gaf een foutmelding (status {(int)response.StatusCode}).");
         }
 
-        var content = ExtractMessageContent(responseBody);
-        var result = JsonSerializer.Deserialize<AiVerspakketResponse>(content, DeserializerOptions);
+        var rawContent = ExtractMessageContent(responseBody);
+        var content = ExtractJsonPayload(rawContent);
 
-        if (result is null)
+        try
         {
-            throw new ExternalServiceException("De AI-provider gaf geen bruikbaar antwoord terug.");
-        }
+            var result = JsonSerializer.Deserialize<AiVerspakketResponse>(content, DeserializerOptions);
 
-        return result;
+            if (result is null)
+            {
+                throw new ExternalServiceException("De AI-provider gaf geen bruikbaar antwoord terug.");
+            }
+
+            return result;
+        }
+        catch (JsonException ex)
+        {
+            logger.LogWarning(ex, "OpenRouter returned content that is not valid JSON: {Content}", Truncate(rawContent, 1500));
+            throw new ExternalServiceException("De AI-provider gaf geen geldig JSON-antwoord terug.", ex);
+        }
     }
 
     private async Task<List<VerspakketFoto>> DownloadFotosAsync(
@@ -296,7 +306,6 @@ public sealed class OpenRouterVerspakketExtractor(
         foreach (var ingredient in ingredienten)
         {
             if (string.IsNullOrWhiteSpace(ingredient.Naam)
-                || ingredient.Naam.Trim().Length > 100
                 || ingredient.Hoeveelheid is null or <= 0
                 || !Enum.TryParse<Eenheid>(ingredient.Eenheid, ignoreCase: true, out var eenheid))
             {
@@ -378,14 +387,42 @@ public sealed class OpenRouterVerspakketExtractor(
         if (!document.RootElement.TryGetProperty("choices", out var choices)
             || choices.GetArrayLength() == 0
             || !choices[0].TryGetProperty("message", out var message)
-            || !message.TryGetProperty("content", out var content)
-            || content.ValueKind != JsonValueKind.String)
+            || !message.TryGetProperty("content", out var content))
         {
             throw new ExternalServiceException("De AI-provider gaf geen bruikbaar antwoord terug.");
         }
 
-        var text = content.GetString() ?? string.Empty;
-        return StripCodeFence(text);
+        return content.ValueKind switch
+        {
+            JsonValueKind.String => content.GetString() ?? string.Empty,
+            JsonValueKind.Array => string.Concat(content.EnumerateArray().Select(ExtractTextPart)),
+            _ => throw new ExternalServiceException("De AI-provider gaf geen bruikbaar antwoord terug.")
+        };
+    }
+
+    private static string? ExtractTextPart(JsonElement part) =>
+        part.ValueKind == JsonValueKind.Object
+        && part.TryGetProperty("text", out var text)
+        && text.ValueKind == JsonValueKind.String
+            ? text.GetString()
+            : null;
+
+    /// <summary>
+    /// Returns the JSON object embedded in the model output, tolerating prose, markdown fences
+    /// and leading/trailing text that some free models add around the schema-conforming object.
+    /// </summary>
+    private static string ExtractJsonPayload(string value)
+    {
+        var text = StripCodeFence(value);
+        var start = text.IndexOf('{');
+        var end = text.LastIndexOf('}');
+
+        if (start < 0 || end <= start)
+        {
+            return text;
+        }
+
+        return text[start..(end + 1)];
     }
 
     private static string StripCodeFence(string value)

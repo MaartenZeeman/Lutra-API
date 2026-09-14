@@ -41,18 +41,21 @@ public sealed partial class ImportVerspakket
             }
 
             var extracted = await extractor.ExtractAsync(normalizedUrl, cancellationToken);
-            ValidateExtracted(extracted);
+
+            var naam = VerspakketImportSanitizer.CleanNaam(extracted.Naam, VerspakketImportSanitizer.MaxNaamLength);
+            ValidateExtracted(naam, extracted);
+
+            var ingredienten = VerspakketImportSanitizer.CleanIngredienten(extracted.Ingredienten);
+            var voedingswaarden = VerspakketImportSanitizer.CleanVoedingswaarden(extracted.Voedingswaarden);
 
             var supermarkten = await context.Supermarkten.AsNoTracking().ToListAsync(cancellationToken);
             var supermarkt = ResolveSupermarkt(supermarkten, extracted.SupermarktNaam, normalizedUrl)
                 ?? throw new ValidationException($"Supermarkt '{extracted.SupermarktNaam}' kon niet worden gekoppeld aan een bekende supermarkt.");
 
-            var naam = extracted.Naam.Trim();
-
             var legacyMatches = await context.Verspaketten
                 .Where(v => v.BronUrl == null
                     && v.SupermarktId == supermarkt.Id
-                    && v.Naam.ToLower() == naam.ToLower())
+                    && v.Naam.ToLower() == naam!.ToLower())
                 .ToListAsync(cancellationToken);
 
             if (legacyMatches.Count > 1)
@@ -86,14 +89,14 @@ public sealed partial class ImportVerspakket
             }
 
             var command = new CreateVerspakket.Command(
-                naam,
+                naam!,
                 extracted.PrijsInCenten,
                 extracted.AantalPersonen!.Value,
                 supermarkt.Id,
                 null,
                 extracted.Fotos.Count > 0 ? extracted.Fotos : null,
-                extracted.Ingredienten.Count > 0 ? extracted.Ingredienten : null,
-                extracted.Voedingswaarden.Count > 0 ? extracted.Voedingswaarden : null,
+                ingredienten.Count > 0 ? ingredienten : null,
+                voedingswaarden.Count > 0 ? voedingswaarden : null,
                 extracted.Allergenen.Count > 0 ? extracted.Allergenen : null,
                 normalizedUrl);
 
@@ -117,16 +120,11 @@ public sealed partial class ImportVerspakket
             }
         }
 
-        private static void ValidateExtracted(Models.Verspakketten.ExtractedVerspakket extracted)
+        private static void ValidateExtracted(string? naam, Models.Verspakketten.ExtractedVerspakket extracted)
         {
-            if (string.IsNullOrWhiteSpace(extracted.Naam))
+            if (naam is null)
             {
-                throw new UnprocessableException("De productpagina bevatte geen productnaam.");
-            }
-
-            if (extracted.Naam.Trim().Length > 50)
-            {
-                throw new UnprocessableException("De productnaam is te lang (maximaal 50 tekens).");
+                throw new UnprocessableException("De productpagina bevatte geen bruikbare productnaam.");
             }
 
             if (extracted.AantalPersonen is null or < 1 or > 10)
