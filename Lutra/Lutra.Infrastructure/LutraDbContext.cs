@@ -25,6 +25,8 @@ public class LutraDbContext : DbContext, ILutraDbContext
 
     public DbSet<Verspakket> Verspaketten => Set<Verspakket>();
 
+    public DbSet<BackgroundCommandJob> BackgroundCommandJobs => Set<BackgroundCommandJob>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -122,6 +124,18 @@ public class LutraDbContext : DbContext, ILutraDbContext
         modelBuilder.Entity<VerspakketAllergeen>(b =>
         {
             b.HasIndex(a => new { a.VerspakketId, a.Allergeen }).IsUnique();
+        });
+
+        modelBuilder.Entity<BackgroundCommandJob>(b =>
+        {
+            b.Property(j => j.ConcurrencyStamp).IsConcurrencyToken();
+
+            b.HasIndex(j => new { j.Status, j.NextAttemptAt });
+            b.HasIndex(j => new { j.Status, j.LeaseExpiresAt });
+
+            b.HasIndex(j => new { j.Type, j.ActiveDeduplicationKey })
+                .IsUnique()
+                .HasFilter("\"ActiveDeduplicationKey\" IS NOT NULL");
         });
     }
 

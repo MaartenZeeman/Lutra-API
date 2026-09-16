@@ -1,3 +1,4 @@
+using Lutra.Application.Exceptions;
 using Lutra.Application.Interfaces;
 using Lutra.Application.Models.Verspakketten;
 
@@ -5,6 +6,7 @@ namespace Lutra.API.IntegrationTests.Infrastructure;
 
 /// <summary>
 /// Deterministic stand-in for the OpenRouter extractor so integration tests never call the network.
+/// URLs containing "transient-fail" or "permanent-fail" simulate the corresponding failures.
 /// </summary>
 public sealed class FakeVerspakketProductExtractor : IVerspakketProductExtractor
 {
@@ -12,6 +14,16 @@ public sealed class FakeVerspakketProductExtractor : IVerspakketProductExtractor
 
     public Task<ExtractedVerspakket> ExtractAsync(string url, CancellationToken cancellationToken)
     {
+        if (url.Contains("transient-fail", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ExternalServiceException("Tijdelijke fout bij het ophalen van de productpagina.");
+        }
+
+        if (url.Contains("permanent-fail", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new UnprocessableException("De productpagina bevatte onvoldoende gegevens.");
+        }
+
         return Task.FromResult(new ExtractedVerspakket
         {
             Naam = "AI Test Verspakket",

@@ -19,5 +19,7 @@ public interface ILutraDbContext
 
     DbSet<Verspakket> Verspaketten { get; }
 
+    DbSet<BackgroundCommandJob> BackgroundCommandJobs { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

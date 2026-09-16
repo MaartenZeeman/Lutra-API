@@ -118,30 +118,25 @@ public class VerspakkettenController(IMediator mediator) : ControllerBase
     }
 
     /// <summary>
-    /// Imports a verspakket from a retailer product page using AI, or returns the existing
-    /// verspakket when the same product was already imported.
+    /// Queues a verspakket import from a retailer product page. The import runs in the background
+    /// and can be monitored through the background command status endpoint.
     /// </summary>
     /// <param name="request">The product page URL to import.</param>
     /// <param name="cancellationToken">Cancellation token for the request.</param>
-    /// <returns>
-    /// Returns 201 Created with the new verspakket identifier, or 200 OK with the existing
-    /// identifier when the product was already imported.
-    /// </returns>
+    /// <returns>Returns 202 Accepted with the background command job identifier.</returns>
     [HttpPost("import")]
-    [ProducesResponseType(typeof(ImportVerspakket.Response), StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(ImportVerspakket.Response), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(EnqueueImportVerspakket.Response), StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
-    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-    [ProducesResponseType(StatusCodes.Status502BadGateway)]
-    public async Task<ActionResult<ImportVerspakket.Response>> Import([FromBody] ImportVerspakketRequest request, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<EnqueueImportVerspakket.Response>> Import([FromBody] ImportVerspakketRequest request, CancellationToken cancellationToken = default)
     {
-        var result = await mediator.SendCommandAsync<ImportVerspakket.Command, ImportVerspakket.Response>(
-            new ImportVerspakket.Command(request.Url), cancellationToken);
+        var result = await mediator.SendCommandAsync<EnqueueImportVerspakket.Command, EnqueueImportVerspakket.Response>(
+            new EnqueueImportVerspakket.Command(request.Url), cancellationToken);
 
-        return result.Created
-            ? CreatedAtAction(nameof(GetById), new { id = result.Id }, result)
-            : Ok(result);
+        return AcceptedAtAction(
+            nameof(BackgroundCommandsController.GetById),
+            "BackgroundCommands",
+            new { id = result.Id },
+            result);
     }
 
     /// <summary>

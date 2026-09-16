@@ -33,6 +33,7 @@ public abstract class IntegrationTestBase : IClassFixture<LutraApiFactory>, IAsy
         var db = scope.ServiceProvider.GetRequiredService<ILutraDbContext>() as LutraDbContext;
         if (db is not null)
         {
+            db.BackgroundCommandJobs.RemoveRange(db.BackgroundCommandJobs);
             db.Beoordelingen.RemoveRange(db.Beoordelingen);
             db.Verspaketten.RemoveRange(db.Verspaketten);
             db.Supermarkten.RemoveRange(db.Supermarkten);

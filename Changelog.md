@@ -1,5 +1,11 @@
 # Changelog
 
+## 16 September 2026
+
+- Added durable background command execution. `POST /api/verspakketten/import` now validates and normalizes synchronously, queues an `ImportVerspakket` job, and returns `202 Accepted`; a new `GET /api/background-commands/{id}` reports `Queued`/`Processing`/`RetryScheduled`/`Succeeded`/`Failed` with the resulting verspakket ID. The new `BackgroundCommandJob` entity (with indexes and a filtered unique active-deduplication key) is persisted via the `AddBackgroundCommandJobs` migration, and an API-hosted `BackgroundCommandWorker` polls and executes jobs so they keep running after the browser disconnects or the API restarts.
+- Jobs are claimed with an optimistic concurrency token and a lease, so multiple API replicas cannot run the same job twice and a crashed worker's job is reclaimed once the lease expires. Failed jobs retry after five minutes up to three total attempts; transient failures (network, timeouts, provider errors) retry while validation and unprocessable-data failures fail immediately, with a bounded error message stored on the job. Configuration lives under the new `BackgroundCommands` section.
+- Hardened OpenRouter response parsing: the extractor now tolerates prose, markdown fences, and array-shaped message content by extracting the embedded JSON object, and converts unparseable output into a logged `ExternalServiceException` instead of leaking a raw `JsonException`.
+
 ## 13 September 2026
 
 - Added `POST /api/verspakketten/import`, which takes a retailer product-page URL, fetches and cleans the page, and uses a configurable OpenRouter model (`OpenRouter:Model`, default `nvidia/nemotron-3-super-120b-a12b:free`) with a strict JSON schema to extract the verspakket, its ingredients, nutrition, allergens and product photos. The new `ImportVerspakket` use case resolves the supermarket from a trusted host map or the AI name, downloads allowlisted product images, and returns the new verspakket ID (or the existing one) via the reused `CreateVerspakket` flow.

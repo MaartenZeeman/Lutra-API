@@ -84,15 +84,25 @@ All settings can be overridden with environment variables using the `__` separat
 | `OpenRouter__Model` | `nvidia/nemotron-3-super-120b-a12b:free` | OpenRouter model used for product-page extraction |
 | `OpenRouter__BaseUrl` | `https://openrouter.ai/api/v1` | OpenRouter API base URL |
 | `OpenRouter__AllowedHosts__0` | `ah.nl` | Retailer host allowed for import (list, add more with increasing index) |
+| `BackgroundCommands__Enabled` | `true` | Set to `false` to stop the hosted background command worker |
+| `BackgroundCommands__PollIntervalSeconds` | `10` | How often the worker polls for due jobs |
+| `BackgroundCommands__RetryDelayMinutes` | `5` | Wait time before a failed job is retried |
+| `BackgroundCommands__MaxAttempts` | `3` | Total attempts (initial + retries) before a job fails permanently |
+| `BackgroundCommands__LeaseDurationMinutes` | `10` | How long a claimed job lease stays valid before it can be reclaimed |
 | `ASPNETCORE_ENVIRONMENT` | `Production` | Set to `Development` to enable Scalar API docs at `/scalar/v1` |
 
 ## Importing verspakketten
 
-`POST /api/verspakketten/import` accepts `{ "url": "https://www.ah.nl/product/..." }`. The API
-fetches the product page, extracts the details with the configured OpenRouter model, downloads the
-product photos, and stores the verspakket. It returns `201 Created` with the new ID, or `200 OK`
-with the existing ID when the same normalized source URL was already imported. Configure the API
-key with `OpenRouter__ApiKey` (never commit it).
+`POST /api/verspakketten/import` accepts `{ "url": "https://www.ah.nl/product/..." }`. Validation and
+URL normalization happen synchronously, then the import is queued as a durable background command.
+The endpoint returns `202 Accepted` with the job, and processing continues even if the client
+disconnects. Poll `GET /api/background-commands/{id}` to follow `Queued`, `Processing`,
+`RetryScheduled`, `Succeeded` or `Failed`; on success `resultVerspakketId` points at the verspakket.
+Configure the API key with `OpenRouter__ApiKey` (never commit it).
+
+Jobs are stored in PostgreSQL, survive API restarts, and a crashed or restarted worker reclaims work
+once its lease expires. Failed jobs are retried every five minutes up to three attempts before they
+fail permanently. Re-requesting a product that already has an active job returns that same job.
 
 > **Security note:** The endpoint fetches user-supplied URLs. Product hosts are restricted to
 > `OpenRouter:AllowedHosts`, image hosts to `OpenRouter:AllowedImageHosts`, and all connections are

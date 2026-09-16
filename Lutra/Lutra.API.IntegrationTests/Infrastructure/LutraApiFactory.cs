@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -62,6 +63,18 @@ public class LutraApiFactory : WebApplicationFactory<Program>
         });
 
         builder.UseEnvironment("Testing");
+
+        // The worker is disabled so tests can trigger processing deterministically; retries run immediately.
+        builder.ConfigureAppConfiguration((_, configuration) =>
+        {
+            configuration.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["BackgroundCommands:Enabled"] = "false",
+                ["BackgroundCommands:RetryDelayMinutes"] = "0",
+                ["BackgroundCommands:MaxAttempts"] = "3",
+                ["BackgroundCommands:LeaseDurationMinutes"] = "10"
+            });
+        });
     }
 
     protected override void Dispose(bool disposing)

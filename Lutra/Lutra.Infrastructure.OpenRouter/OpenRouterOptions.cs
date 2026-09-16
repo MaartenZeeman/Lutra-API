@@ -19,6 +19,13 @@ public sealed class OpenRouterOptions
 
     public int TimeoutSeconds { get; set; } = 120;
 
+    /// <summary>
+    /// Per-request timeout for the retail client (product page and image downloads). Keep the
+    /// background job lease comfortably above
+    /// <see cref="TimeoutSeconds"/> + (MaxRedirects + 1 + MaxImages) * this value.
+    /// </summary>
+    public int RetailTimeoutSeconds { get; set; } = 20;
+
     public int MaxHtmlCharacters { get; set; } = 150_000;
 
     public long MaxHtmlBytes { get; set; } = 5_000_000;
