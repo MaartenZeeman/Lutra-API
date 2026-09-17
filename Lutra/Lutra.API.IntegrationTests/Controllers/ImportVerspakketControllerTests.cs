@@ -31,18 +31,18 @@ public class ImportVerspakketControllerTests(LutraApiFactory factory) : Integrat
 
     private async Task<EnqueueImportVerspakket.Response> QueueAsync(string url)
     {
-        var response = await Client.PostAsJsonAsync("/api/verspakketten/import", new { url });
+        var response = await Client.PostAsJsonAsync("/api/verspakketten/import", new { url }, TestContext.Current.CancellationToken);
         response.StatusCode.Should().Be(HttpStatusCode.Accepted);
-        var body = await response.Content.ReadFromJsonAsync<EnqueueImportVerspakket.Response>();
+        var body = await response.Content.ReadFromJsonAsync<EnqueueImportVerspakket.Response>(TestContext.Current.CancellationToken);
         body.Should().NotBeNull();
         return body!;
     }
 
     private async Task<GetBackgroundCommand.Response> GetStatusAsync(Guid id)
     {
-        var response = await Client.GetAsync($"/api/background-commands/{id}");
+        var response = await Client.GetAsync($"/api/background-commands/{id}", TestContext.Current.CancellationToken);
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<GetBackgroundCommand.Response>();
+        var body = await response.Content.ReadFromJsonAsync<GetBackgroundCommand.Response>(TestContext.Current.CancellationToken);
         body.Should().NotBeNull();
         return body!;
     }
@@ -64,7 +64,7 @@ public class ImportVerspakketControllerTests(LutraApiFactory factory) : Integrat
         status.ResultVerspakketId.Should().NotBeNull();
         status.LastError.Should().BeNull();
 
-        var verspakketResponse = await Client.GetAsync($"/api/verspakketten/{status.ResultVerspakketId}");
+        var verspakketResponse = await Client.GetAsync($"/api/verspakketten/{status.ResultVerspakketId}", TestContext.Current.CancellationToken);
         verspakketResponse.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
@@ -118,7 +118,8 @@ public class ImportVerspakketControllerTests(LutraApiFactory factory) : Integrat
     {
         var response = await Client.PostAsJsonAsync(
             "/api/verspakketten/import",
-            new { url = "not-a-valid-url" });
+            new { url = "not-a-valid-url" },
+            TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -144,7 +145,8 @@ public class ImportVerspakketControllerTests(LutraApiFactory factory) : Integrat
 
         var response = await Client.PostAsJsonAsync(
             "/api/verspakketten/import",
-            new { url = "https://www.ah.nl/product/queue-full" });
+            new { url = "https://www.ah.nl/product/queue-full" },
+            TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
     }
@@ -152,7 +154,7 @@ public class ImportVerspakketControllerTests(LutraApiFactory factory) : Integrat
     [Fact]
     public async Task GetStatus_UnknownId_ReturnsNotFound()
     {
-        var response = await Client.GetAsync($"/api/background-commands/{Guid.NewGuid()}");
+        var response = await Client.GetAsync($"/api/background-commands/{Guid.NewGuid()}", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }

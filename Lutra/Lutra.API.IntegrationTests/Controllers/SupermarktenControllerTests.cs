@@ -16,10 +16,10 @@ public class SupermarktenControllerTests(LutraApiFactory factory)
     [Fact]
     public async Task Get_ReturnsOk_WithEmptyList_WhenNoDataExists()
     {
-        var response = await Client.GetAsync("/api/supermarkten");
+        var response = await Client.GetAsync("/api/supermarkten", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<GetSupermarkten.Response>();
+        var body = await response.Content.ReadFromJsonAsync<GetSupermarkten.Response>(TestContext.Current.CancellationToken);
         body.Should().NotBeNull();
         body!.Supermarkten.Should().BeEmpty();
     }
@@ -33,10 +33,10 @@ public class SupermarktenControllerTests(LutraApiFactory factory)
             CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
         });
 
-        var response = await Client.GetAsync("/api/supermarkten");
+        var response = await Client.GetAsync("/api/supermarkten", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<GetSupermarkten.Response>();
+        var body = await response.Content.ReadFromJsonAsync<GetSupermarkten.Response>(TestContext.Current.CancellationToken);
         body!.Supermarkten.Should().HaveCount(1);
         body.Supermarkten.First().Naam.Should().Be("Albert Heijn");
     }
@@ -60,10 +60,10 @@ public class SupermarktenControllerTests(LutraApiFactory factory)
             CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
         });
 
-        var response = await Client.GetAsync("/api/supermarkten");
+        var response = await Client.GetAsync("/api/supermarkten", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<GetSupermarkten.Response>();
+        var body = await response.Content.ReadFromJsonAsync<GetSupermarkten.Response>(TestContext.Current.CancellationToken);
         body!.Supermarkten.Should().HaveCount(3);
     }
 
@@ -88,10 +88,10 @@ public class SupermarktenControllerTests(LutraApiFactory factory)
             CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
         });
 
-        var response = await Client.GetAsync("/api/supermarkten?skip=1&take=1");
+        var response = await Client.GetAsync("/api/supermarkten?skip=1&take=1", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<GetSupermarkten.Response>();
+        var body = await response.Content.ReadFromJsonAsync<GetSupermarkten.Response>(TestContext.Current.CancellationToken);
         body!.Supermarkten.Should().HaveCount(1);
         // Handler orders by Naam ascending, so skip=1 skips "Albert Heijn" and returns "Jumbo".
         body.Supermarkten.First().Naam.Should().Be("Jumbo");
@@ -106,10 +106,10 @@ public class SupermarktenControllerTests(LutraApiFactory factory)
             CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
         });
 
-        var response = await Client.GetAsync("/api/supermarkten?skip=10&take=50");
+        var response = await Client.GetAsync("/api/supermarkten?skip=10&take=50", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<GetSupermarkten.Response>();
+        var body = await response.Content.ReadFromJsonAsync<GetSupermarkten.Response>(TestContext.Current.CancellationToken);
         body!.Supermarkten.Should().BeEmpty();
     }
 
@@ -124,10 +124,10 @@ public class SupermarktenControllerTests(LutraApiFactory factory)
             ModifiedAt = DateTime.UtcNow
         }));
 
-        var response = await Client.GetAsync("/api/supermarkten?take=1000");
+        var response = await Client.GetAsync("/api/supermarkten?take=1000", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<GetSupermarkten.Response>();
+        var body = await response.Content.ReadFromJsonAsync<GetSupermarkten.Response>(TestContext.Current.CancellationToken);
         body!.Supermarkten.Should().HaveCount(200);
     }
 
@@ -145,10 +145,10 @@ public class SupermarktenControllerTests(LutraApiFactory factory)
             CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
         });
 
-        var response = await Client.GetAsync("/api/supermarkten?skip=-5&take=0");
+        var response = await Client.GetAsync("/api/supermarkten?skip=-5&take=0", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<GetSupermarkten.Response>();
+        var body = await response.Content.ReadFromJsonAsync<GetSupermarkten.Response>(TestContext.Current.CancellationToken);
         body!.Supermarkten.Should().ContainSingle().Which.Naam.Should().Be("Albert Heijn");
     }
 
@@ -168,10 +168,10 @@ public class SupermarktenControllerTests(LutraApiFactory factory)
             CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
         });
 
-        var response = await Client.GetAsync("/api/supermarkten");
+        var response = await Client.GetAsync("/api/supermarkten", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<GetSupermarkten.Response>();
+        var body = await response.Content.ReadFromJsonAsync<GetSupermarkten.Response>(TestContext.Current.CancellationToken);
         var namen = body!.Supermarkten.Select(s => s.Naam).ToList();
         namen.Should().BeInAscendingOrder();
     }
@@ -188,10 +188,10 @@ public class SupermarktenControllerTests(LutraApiFactory factory)
             DeletedAt = DateTime.UtcNow
         });
 
-        var response = await Client.GetAsync("/api/supermarkten");
+        var response = await Client.GetAsync("/api/supermarkten", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<GetSupermarkten.Response>();
+        var body = await response.Content.ReadFromJsonAsync<GetSupermarkten.Response>(TestContext.Current.CancellationToken);
         body!.Supermarkten.Should().BeEmpty();
     }
 
@@ -201,10 +201,10 @@ public class SupermarktenControllerTests(LutraApiFactory factory)
     public async Task Post_CreatesSupermarkt_AndReturns201()
     {
         var request = new SupermarktRequest("Jumbo");
-        var response = await Client.PostAsJsonAsync("/api/supermarkten", request);
+        var response = await Client.PostAsJsonAsync("/api/supermarkten", request, TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var body = await response.Content.ReadFromJsonAsync<CreateSupermarkt.Response>();
+        var body = await response.Content.ReadFromJsonAsync<CreateSupermarkt.Response>(TestContext.Current.CancellationToken);
         body!.Id.Should().NotBeEmpty();
         response.Headers.Location.Should().NotBeNull();
     }
@@ -213,7 +213,7 @@ public class SupermarktenControllerTests(LutraApiFactory factory)
     public async Task Post_ReturnsBadRequest_WhenNaamEmpty()
     {
         var request = new SupermarktRequest("");
-        var response = await Client.PostAsJsonAsync("/api/supermarkten", request);
+        var response = await Client.PostAsJsonAsync("/api/supermarkten", request, TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -230,7 +230,7 @@ public class SupermarktenControllerTests(LutraApiFactory factory)
         });
 
         var request = new SupermarktRequest("Nieuw");
-        var response = await Client.PutAsJsonAsync($"/api/supermarkten/{supermarkt.Id}", request);
+        var response = await Client.PutAsJsonAsync($"/api/supermarkten/{supermarkt.Id}", request, TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
@@ -239,7 +239,7 @@ public class SupermarktenControllerTests(LutraApiFactory factory)
     public async Task Update_ReturnsNotFound_WhenSupermarktDoesNotExist()
     {
         var request = new SupermarktRequest("Nieuw");
-        var response = await Client.PutAsJsonAsync($"/api/supermarkten/{Guid.NewGuid()}", request);
+        var response = await Client.PutAsJsonAsync($"/api/supermarkten/{Guid.NewGuid()}", request, TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }

@@ -19,10 +19,10 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
     [Fact]
     public async Task Get_ReturnsOk_WithEmptyList_WhenNoDataExists()
     {
-        var response = await Client.GetAsync("/api/verspakketten");
+        var response = await Client.GetAsync("/api/verspakketten", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<GetVerspakketten.Response>();
+        var body = await response.Content.ReadFromJsonAsync<GetVerspakketten.Response>(TestContext.Current.CancellationToken);
         body.Should().NotBeNull();
         body!.Verspakketten.Should().BeEmpty();
     }
@@ -61,10 +61,10 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
         });
         await SeedAsync(verspakket);
 
-        var response = await Client.GetAsync("/api/verspakketten");
+        var response = await Client.GetAsync("/api/verspakketten", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<GetVerspakketten.Response>();
+        var body = await response.Content.ReadFromJsonAsync<GetVerspakketten.Response>(TestContext.Current.CancellationToken);
         body!.Verspakketten.Should().HaveCount(1);
         body.Verspakketten.First().Naam.Should().Be("Lente Pakket");
         body.Verspakketten.First().Foto.Should().NotBeNull();
@@ -76,7 +76,7 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
     [Fact]
     public async Task GetById_ReturnsNotFound_WhenVerspakketDoesNotExist()
     {
-        var response = await Client.GetAsync($"/api/verspakketten/{Guid.NewGuid()}");
+        var response = await Client.GetAsync($"/api/verspakketten/{Guid.NewGuid()}", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -96,10 +96,10 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
             CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
         });
 
-        var response = await Client.GetAsync($"/api/verspakketten/{verspakket.Id}");
+        var response = await Client.GetAsync($"/api/verspakketten/{verspakket.Id}", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<GetVerspakket.Response>();
+        var body = await response.Content.ReadFromJsonAsync<GetVerspakket.Response>(TestContext.Current.CancellationToken);
         body!.Verspakket.Should().NotBeNull();
         body.Verspakket!.Naam.Should().Be("Zomer Pakket");
     }
@@ -116,10 +116,10 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
         });
 
         var request = new CreateVerspakketRequest("Herfst Pakket", 1499, 3, supermarkt.Id);
-        var response = await Client.PostAsJsonAsync("/api/verspakketten", request);
+        var response = await Client.PostAsJsonAsync("/api/verspakketten", request, TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var body = await response.Content.ReadFromJsonAsync<CreateVerspakket.Response>();
+        var body = await response.Content.ReadFromJsonAsync<CreateVerspakket.Response>(TestContext.Current.CancellationToken);
         body!.Id.Should().NotBeEmpty();
         response.Headers.Location.Should().NotBeNull();
     }
@@ -146,13 +146,13 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
                 Tekst = "Heel goed"
             });
 
-        var response = await Client.PostAsJsonAsync("/api/verspakketten", command);
+        var response = await Client.PostAsJsonAsync("/api/verspakketten", command, TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var body = await response.Content.ReadFromJsonAsync<CreateVerspakket.Response>();
+        var body = await response.Content.ReadFromJsonAsync<CreateVerspakket.Response>(TestContext.Current.CancellationToken);
         body!.Id.Should().NotBeEmpty();
 
-        var created = await Client.GetFromJsonAsync<GetVerspakket.Response>($"/api/verspakketten/{body.Id}");
+        var created = await Client.GetFromJsonAsync<GetVerspakket.Response>($"/api/verspakketten/{body.Id}", TestContext.Current.CancellationToken);
         created!.Verspakket.Beoordelingen.Should().ContainSingle();
         created.Verspakket.Beoordelingen!.Single().CijferSmaak.Should().Be(9);
     }
@@ -161,7 +161,7 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
     public async Task Post_ReturnsNotFound_WhenSupermarktDoesNotExist()
     {
         var request = new CreateVerspakketRequest("Winter Pakket", 999, 2, Guid.NewGuid());
-        var response = await Client.PostAsJsonAsync("/api/verspakketten", request);
+        var response = await Client.PostAsJsonAsync("/api/verspakketten", request, TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -182,7 +182,7 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
             supermarkt.Id,
             Fotos: [new VerspakketFotoRequest("not-valid-base64!!", true)]);
 
-        var response = await Client.PostAsJsonAsync("/api/verspakketten", request);
+        var response = await Client.PostAsJsonAsync("/api/verspakketten", request, TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -202,7 +202,7 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
 
         var request = new CreateVerspakketRequest("Pakket", 999, 2, supermarkt.Id, Fotos: fotos);
 
-        var response = await Client.PostAsJsonAsync("/api/verspakketten", request);
+        var response = await Client.PostAsJsonAsync("/api/verspakketten", request, TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -225,7 +225,7 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
         });
 
         var request = new UpdateVerspakketRequest("Nieuw Pakket", 1999, 3, supermarkt.Id);
-        var response = await Client.PutAsJsonAsync($"/api/verspakketten/{verspakket.Id}", request);
+        var response = await Client.PutAsJsonAsync($"/api/verspakketten/{verspakket.Id}", request, TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
@@ -240,7 +240,7 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
         });
 
         var request = new UpdateVerspakketRequest("Pakket", 999, 2, supermarkt.Id);
-        var response = await Client.PutAsJsonAsync($"/api/verspakketten/{Guid.NewGuid()}", request);
+        var response = await Client.PutAsJsonAsync($"/api/verspakketten/{Guid.NewGuid()}", request, TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -261,7 +261,7 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
         });
 
         var request = new UpdateVerspakketRequest("Pakket", 999, 2, Guid.NewGuid());
-        var response = await Client.PutAsJsonAsync($"/api/verspakketten/{verspakket.Id}", request);
+        var response = await Client.PutAsJsonAsync($"/api/verspakketten/{verspakket.Id}", request, TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -288,7 +288,7 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
             supermarkt.Id,
             Fotos: [new VerspakketFotoRequest("not-valid-base64!!", true)]);
 
-        var response = await Client.PutAsJsonAsync($"/api/verspakketten/{verspakket.Id}", request);
+        var response = await Client.PutAsJsonAsync($"/api/verspakketten/{verspakket.Id}", request, TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -322,10 +322,10 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
             CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
         });
 
-        var response = await Client.GetAsync("/api/verspakketten?skip=1&take=1");
+        var response = await Client.GetAsync("/api/verspakketten?skip=1&take=1", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<GetVerspakketten.Response>();
+        var body = await response.Content.ReadFromJsonAsync<GetVerspakketten.Response>(TestContext.Current.CancellationToken);
         body!.Verspakketten.Should().HaveCount(1);
         body.Verspakketten.First().Naam.Should().Be("Broccoli Pakket");
     }
@@ -351,10 +351,10 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
             CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
         });
 
-        var response = await Client.GetAsync("/api/verspakketten?sortDirection=Descending");
+        var response = await Client.GetAsync("/api/verspakketten?sortDirection=Descending", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<GetVerspakketten.Response>();
+        var body = await response.Content.ReadFromJsonAsync<GetVerspakketten.Response>(TestContext.Current.CancellationToken);
         body!.Verspakketten.First().Naam.Should().Be("Zomerpakket");
         body.Verspakketten.Last().Naam.Should().Be("Aardappel Pakket");
     }
@@ -377,10 +377,10 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
             ModifiedAt = DateTime.UtcNow
         }));
 
-        var response = await Client.GetAsync("/api/verspakketten?take=1000");
+        var response = await Client.GetAsync("/api/verspakketten?take=1000", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<GetVerspakketten.Response>();
+        var body = await response.Content.ReadFromJsonAsync<GetVerspakketten.Response>(TestContext.Current.CancellationToken);
         body!.Verspakketten.Should().HaveCount(200);
     }
 
@@ -402,10 +402,10 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
             ModifiedAt = DateTime.UtcNow
         }));
 
-        var response = await Client.GetAsync("/api/verspakketten?skip=-5&take=0");
+        var response = await Client.GetAsync("/api/verspakketten?skip=-5&take=0", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<GetVerspakketten.Response>();
+        var body = await response.Content.ReadFromJsonAsync<GetVerspakketten.Response>(TestContext.Current.CancellationToken);
         body!.Verspakketten.Should().ContainSingle();
     }
 
@@ -415,7 +415,7 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
     public async Task AddBeoordeling_ReturnsNotFound_WhenVerspakketDoesNotExist()
     {
         var command = new AddBeoordeling.Command(Guid.NewGuid(), 8, 7, true, "Heerlijk!");
-        var response = await Client.PostAsJsonAsync($"/api/verspakketten/{command.VerspakketId}/beoordelingen", command);
+        var response = await Client.PostAsJsonAsync($"/api/verspakketten/{command.VerspakketId}/beoordelingen", command, TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -436,10 +436,10 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
         });
 
         var command = new AddBeoordeling.Command(verspakket.Id, 8, 7, true, "Heerlijk!");
-        var response = await Client.PostAsJsonAsync($"/api/verspakketten/{verspakket.Id}/beoordelingen", command);
+        var response = await Client.PostAsJsonAsync($"/api/verspakketten/{verspakket.Id}/beoordelingen", command, TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var body = await response.Content.ReadFromJsonAsync<AddBeoordeling.Response>();
+        var body = await response.Content.ReadFromJsonAsync<AddBeoordeling.Response>(TestContext.Current.CancellationToken);
         body!.Id.Should().NotBeEmpty();
     }
 
@@ -465,12 +465,12 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
                 new IngredientRequest("Gehakt", 300, Lutra.Domain.Entities.Eenheid.Gram, false)
             ]);
 
-        var response = await Client.PostAsJsonAsync("/api/verspakketten", request);
+        var response = await Client.PostAsJsonAsync("/api/verspakketten", request, TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var body = await response.Content.ReadFromJsonAsync<CreateVerspakket.Response>();
+        var body = await response.Content.ReadFromJsonAsync<CreateVerspakket.Response>(TestContext.Current.CancellationToken);
 
-        var created = await Client.GetFromJsonAsync<GetVerspakket.Response>($"/api/verspakketten/{body!.Id}");
+        var created = await Client.GetFromJsonAsync<GetVerspakket.Response>($"/api/verspakketten/{body!.Id}", TestContext.Current.CancellationToken);
         created!.Verspakket.Ingredienten.Should().HaveCount(2);
         var tomaten = created.Verspakket.Ingredienten!.Single(i => i.Naam == "Tomaten");
         tomaten.Hoeveelheid.Should().Be(400);
@@ -512,11 +512,11 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
                 new IngredientRequest("Olijfolie", 1, Lutra.Domain.Entities.Eenheid.Eetlepel, false)
             ]);
 
-        var response = await Client.PutAsJsonAsync($"/api/verspakketten/{verspakket.Id}", request);
+        var response = await Client.PutAsJsonAsync($"/api/verspakketten/{verspakket.Id}", request, TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        var created = await Client.GetFromJsonAsync<GetVerspakket.Response>($"/api/verspakketten/{verspakket.Id}");
+        var created = await Client.GetFromJsonAsync<GetVerspakket.Response>($"/api/verspakketten/{verspakket.Id}", TestContext.Current.CancellationToken);
         created!.Verspakket.Ingredienten.Should().ContainSingle();
         created.Verspakket.Ingredienten!.Single().Naam.Should().Be("Olijfolie");
     }
@@ -544,12 +544,12 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
             ],
             Allergenen: [Allergeen.Gluten, Allergeen.Melk, Allergeen.Pinda]);
 
-        var response = await Client.PostAsJsonAsync("/api/verspakketten", request);
+        var response = await Client.PostAsJsonAsync("/api/verspakketten", request, TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var body = await response.Content.ReadFromJsonAsync<CreateVerspakket.Response>();
+        var body = await response.Content.ReadFromJsonAsync<CreateVerspakket.Response>(TestContext.Current.CancellationToken);
 
-        var created = await Client.GetFromJsonAsync<GetVerspakket.Response>($"/api/verspakketten/{body!.Id}");
+        var created = await Client.GetFromJsonAsync<GetVerspakket.Response>($"/api/verspakketten/{body!.Id}", TestContext.Current.CancellationToken);
         created!.Verspakket.Voedingswaarden.Should().HaveCount(2);
         var per100Gram = created.Verspakket.Voedingswaarden!.Single(w => w.Basis == VoedingswaardeBasis.Per100Gram);
         per100Gram.EnergieKj.Should().Be(520);
@@ -598,7 +598,7 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
                 new VoedingswaardeRequest(VoedingswaardeBasis.Per100Gram, null, null, 2, 3, null, null, null, null, null)
             ]);
 
-        var response = await Client.PostAsJsonAsync("/api/verspakketten", request);
+        var response = await Client.PostAsJsonAsync("/api/verspakketten", request, TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
@@ -648,11 +648,11 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
             ],
             Allergenen: [Allergeen.Melk]);
 
-        var response = await Client.PutAsJsonAsync($"/api/verspakketten/{verspakket.Id}", request);
+        var response = await Client.PutAsJsonAsync($"/api/verspakketten/{verspakket.Id}", request, TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        var created = await Client.GetFromJsonAsync<GetVerspakket.Response>($"/api/verspakketten/{verspakket.Id}");
+        var created = await Client.GetFromJsonAsync<GetVerspakket.Response>($"/api/verspakketten/{verspakket.Id}", TestContext.Current.CancellationToken);
         created!.Verspakket.Voedingswaarden.Should().ContainSingle();
         created.Verspakket.Voedingswaarden!.Single().Basis.Should().Be(VoedingswaardeBasis.PerPortie);
         created.Verspakket.Voedingswaarden.Single().EnergieKj.Should().Be(2723);
