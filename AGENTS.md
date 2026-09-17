@@ -72,7 +72,8 @@ dotnet run --project Lutra.AppHost/Lutra.AppHost.csproj
 
 - Add or update unit tests in `Lutra.Application.UnitTests` for handler/business behavior, tests in `Lutra.Infrastructure.OpenRouter.UnitTests` for the extractor/HTML/SSRF helpers (the Application unit-test project does not reference the OpenRouter project), and integration tests in `Lutra.API.IntegrationTests` for HTTP behavior.
 - Do not assume integration tests exercise PostgreSQL-specific behavior; they run on SQLite unless a separate database-backed test is explicitly added.
-- No CI workflows, formatter, linter, or pre-commit configuration is present in the repository; `dotnet build` plus running the unit and integration test projects (see Commands) are the available baseline checks.
+- Keep the build warning-free: after a change, run `dotnet build Lutra.sln` and resolve every warning it reports (compiler, analyzer, or MSBuild), including pre-existing warnings in projects you touch. Only leave a warning in place when no supported fix exists; in that case suppress it narrowly (for example `NoWarn` for the specific code) and explain why in the changelog instead of leaving it unfixed.
+- A GitHub Actions workflow (`.github/workflows/build-and-test.yml`) builds the solution and runs the unit and integration tests on pushes to `main`; locally, `dotnet build` plus running the unit and integration test projects (see Commands) are the available baseline checks.
 
 ## Naming and Style
 
@@ -92,7 +93,7 @@ dotnet run --project Lutra.AppHost/Lutra.AppHost.csproj
 
 - Read the relevant file before editing.
 - Make the smallest change that solves the problem and reuse existing repository patterns instead of inventing new ones.
-- Run or request build/test verification after changes when appropriate; avoid broad refactors unless explicitly requested.
+- Run or request build/test verification after changes when appropriate; the build must finish with zero warnings (see Verification), and avoid broad refactors unless explicitly requested.
 
 
 ## Changelog
