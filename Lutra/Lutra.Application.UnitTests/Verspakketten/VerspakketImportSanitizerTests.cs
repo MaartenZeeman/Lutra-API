@@ -9,13 +9,13 @@ public class VerspakketImportSanitizerTests
     [Fact]
     public void CleanNaam_LongName_TruncatesToMaxLengthAtWordBoundary()
     {
-        var value = "Jumbo Satépannetje Gesneden Verspakket 4 Personen met extra veel groenten";
+        var value = "Jumbo Satépannetje Gesneden Verspakket 4 Personen met extra veel groenten en verse kruidenboter, romige saus, krokante aardappelpartjes en een lekker bijgerecht voor het hele gezin, samengesteld door onze chef met zorg voor smaak en kwaliteit elke dag opnieuw geselecteerd voor de beste kwaliteit en verse smaakbeleving";
 
         var result = VerspakketImportSanitizer.CleanNaam(value, VerspakketImportSanitizer.MaxNaamLength);
 
         result.Should().NotBeNull();
         result!.Length.Should().BeLessThanOrEqualTo(VerspakketImportSanitizer.MaxNaamLength);
-        result.Should().Be("Jumbo Satépannetje Gesneden Verspakket 4 Personen");
+        result.Should().Be("Jumbo Satépannetje Gesneden Verspakket 4 Personen met extra veel groenten en verse kruidenboter, romige saus, krokante aardappelpartjes en een lekker bijgerecht voor het hele gezin, samengesteld door onze chef met zorg voor smaak en kwaliteit elke dag");
     }
 
     [Fact]

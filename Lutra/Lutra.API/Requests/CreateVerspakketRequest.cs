@@ -7,7 +7,7 @@ namespace Lutra.API.Requests;
 /// Represents the data required to create a verspakket.
 /// </summary>
 public sealed record CreateVerspakketRequest(
-    [Required, MaxLength(50)] string Naam,
+    [Required, MaxLength(255)] string Naam,
     [Range(0, int.MaxValue)] int? PrijsInCenten,
     [Range(1, 10)] int AantalPersonen,
     [Required] Guid SupermarktId,

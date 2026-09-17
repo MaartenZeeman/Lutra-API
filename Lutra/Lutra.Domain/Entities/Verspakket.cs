@@ -10,7 +10,7 @@ public class Verspakket : BaseEntity
     private readonly List<Voedingswaarde> _voedingswaarden = [];
     private readonly List<VerspakketAllergeen> _allergenen = [];
 
-    [MaxLength(50)]
+    [MaxLength(255)]
     public required string Naam { get; set; }
 
     [Range(0, int.MaxValue)]

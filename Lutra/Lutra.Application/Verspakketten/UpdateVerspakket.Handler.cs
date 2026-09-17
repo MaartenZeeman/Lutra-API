@@ -24,8 +24,8 @@ public sealed partial class UpdateVerspakket
             if (string.IsNullOrWhiteSpace(request.Naam))
                 throw new ValidationException("Naam mag niet leeg zijn.");
 
-            if (request.Naam.Length > 50)
-                throw new ValidationException("Naam mag maximaal 50 tekens bevatten.");
+            if (request.Naam.Length > 255)
+                throw new ValidationException("Naam mag maximaal 255 tekens bevatten.");
 
             if (request.PrijsInCenten < 0)
                 throw new ValidationException("PrijsInCenten mag niet negatief zijn.");

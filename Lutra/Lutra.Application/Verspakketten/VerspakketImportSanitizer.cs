@@ -9,7 +9,7 @@ namespace Lutra.Application.Verspakketten;
 /// </summary>
 public static partial class VerspakketImportSanitizer
 {
-    public const int MaxNaamLength = 50;
+    public const int MaxNaamLength = 255;
     public const int MaxIngredientNaamLength = 100;
 
     /// <summary>Largest value that fits a numeric(10,2) column.</summary>

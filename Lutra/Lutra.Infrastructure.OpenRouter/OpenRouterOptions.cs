@@ -47,7 +47,8 @@ public sealed class OpenRouterOptions
         "allerhande.nl",
         "jumbo.com",
         "poiesz.nl",
-        "lidl.nl"
+        "poiesz-supermarkten.nl",
+        "lidl.nl",
     ];
 
     /// <summary>Additional hosts allowed to serve product images (CDNs).</summary>
@@ -60,6 +61,7 @@ public sealed class OpenRouterOptions
         "lidl.nl",
         "lidl.com",
         "lidl-services.com",
-        "poiesz.nl"
+        "poiesz.nl",
+        "poiesz-supermarkten.nl",
     ];
 }

@@ -1,5 +1,9 @@
 # Changelog
 
+## 17 September 2026
+
+- Increased the maximum length of a `Verspakket` name to 255 characters. The domain entity, create/update requests, the `UpdateVerspakket` handler validation and the `VerspakketImportSanitizer` truncation limit (with its word-boundary test) were aligned to 255, and the new `EnlargeVerspakketNaam` migration widens the `Verspaketten.Naam` column from `character varying(50)` to `character varying(255)`.
+
 ## 16 September 2026
 
 - Added durable background command execution. `POST /api/verspakketten/import` now validates and normalizes synchronously, queues an `ImportVerspakket` job, and returns `202 Accepted`; a new `GET /api/background-commands/{id}` reports `Queued`/`Processing`/`RetryScheduled`/`Succeeded`/`Failed` with the resulting verspakket ID. The new `BackgroundCommandJob` entity (with indexes and a filtered unique active-deduplication key) is persisted via the `AddBackgroundCommandJobs` migration, and an API-hosted `BackgroundCommandWorker` polls and executes jobs so they keep running after the browser disconnects or the API restarts.

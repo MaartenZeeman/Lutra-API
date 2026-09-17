@@ -138,7 +138,7 @@ public class ImportVerspakketHandlerTests
         _contextMock.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
         _extractorMock
             .Setup(e => e.ExtractAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(BuildExtracted(naam: "Jumbo Satépannetje Gesneden Verspakket 4 Personen met extra veel groenten"));
+            .ReturnsAsync(BuildExtracted(naam: "Jumbo Satépannetje Gesneden Verspakket 4 Personen met extra veel groenten en verse kruidenboter, romige saus, krokante aardappelpartjes en een lekker bijgerecht voor het hele gezin, samengesteld door onze chef met zorg voor smaak en kwaliteit elke dag opnieuw geselecteerd voor de beste kwaliteit en verse smaakbeleving"));
 
         CreateVerspakket.Command? captured = null;
         _mediatorMock
