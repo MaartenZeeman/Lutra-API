@@ -34,9 +34,14 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
         {
             await WriteProblemAsync(context, StatusCodes.Status422UnprocessableEntity, ex.Message);
         }
+        catch (TooManyRequestsException ex)
+        {
+            await WriteProblemAsync(context, StatusCodes.Status429TooManyRequests, ex.Message);
+        }
         catch (ExternalServiceException ex)
         {
-            await WriteProblemAsync(context, StatusCodes.Status502BadGateway, ex.Message);
+            logger.LogWarning(ex, "External service failure during request processing.");
+            await WriteProblemAsync(context, StatusCodes.Status502BadGateway, "De externe dienst gaf een foutmelding.");
         }
         catch (Exception ex)
         {
@@ -61,6 +66,7 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
                 StatusCodes.Status409Conflict => "Conflict",
                 StatusCodes.Status422UnprocessableEntity => "Unprocessable Entity",
                 StatusCodes.Status502BadGateway => "Bad Gateway",
+                StatusCodes.Status429TooManyRequests => "Too Many Requests",
                 _ => "Internal Server Error"
             },
             Detail = message

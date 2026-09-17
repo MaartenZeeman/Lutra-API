@@ -22,4 +22,10 @@ public sealed class BackgroundCommandsOptions
     public int LeaseDurationMinutes { get; set; } = 20;
 
     public int BatchSize { get; set; } = 5;
+
+    /// <summary>
+    /// Maximum number of active (queued, retrying or processing) import jobs. New imports are
+    /// rejected with HTTP 429 once this many jobs are waiting, so the queue cannot grow unbounded.
+    /// </summary>
+    public int MaxPendingJobs { get; set; } = 50;
 }

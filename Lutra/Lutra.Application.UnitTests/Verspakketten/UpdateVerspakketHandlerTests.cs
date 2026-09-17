@@ -145,7 +145,25 @@ public class UpdateVerspakketHandlerTests
     }
 
     [Fact]
-    public async Task Handle_InvalidAantalPersonen_ThrowsArgumentException()
+    public async Task Handle_InvalidBase64Foto_ThrowsValidationException()
+    {
+        var (verspakketId, supermarktId) = SetupContext();
+
+        var command = new UpdateVerspakket.Command(
+            verspakketId,
+            "Pakket",
+            999,
+            2,
+            supermarktId,
+            new List<VerspakketFoto> { new("not-valid-base64!!", IsMainImage: true) });
+
+        var act = () => _handler.Handle(command, CancellationToken.None);
+
+        await act.Should().ThrowAsync<ValidationException>();
+    }
+
+    [Fact]
+    public async Task Handle_InvalidAantalPersonen_ThrowsValidationException()
     {
         var (verspakketId, supermarktId) = SetupContext();
 
@@ -223,7 +241,7 @@ public class UpdateVerspakketHandlerTests
     }
 
     [Fact]
-    public async Task Handle_InvalidIngredientNaam_ThrowsArgumentException()
+    public async Task Handle_InvalidIngredientNaam_ThrowsValidationException()
     {
         var (verspakketId, supermarktId) = SetupContext();
 

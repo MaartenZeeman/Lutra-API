@@ -5,13 +5,16 @@ using Lutra.Application.Exceptions;
 using Lutra.Application.Interfaces;
 using Lutra.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Lutra.Application.Verspakketten;
 
 public sealed partial class EnqueueImportVerspakket
 {
-    public sealed class Handler(ILutraDbContext context) : ICommandHandler<Command, Response>
+    public sealed class Handler(ILutraDbContext context, IOptions<BackgroundCommandsOptions> options) : ICommandHandler<Command, Response>
     {
+        private readonly BackgroundCommandsOptions _options = options.Value;
+
         public async Task<Response> Handle(Command request, CancellationToken cancellationToken)
         {
             if (!VerspakketUrlNormalizer.TryNormalize(request.Url, out var normalizedUrl))
@@ -29,6 +32,16 @@ public sealed partial class EnqueueImportVerspakket
             if (existing is not null)
             {
                 return Map(existing, existingJob: true);
+            }
+
+            var activeJobCount = await context.BackgroundCommandJobs
+                .AsNoTracking()
+                .CountAsync(j => j.IsActive, cancellationToken);
+
+            if (activeJobCount >= _options.MaxPendingJobs)
+            {
+                throw new TooManyRequestsException(
+                    "Er staan te veel importtaken in de wachtrij. Probeer het later opnieuw.");
             }
 
             var now = DateTime.UtcNow;

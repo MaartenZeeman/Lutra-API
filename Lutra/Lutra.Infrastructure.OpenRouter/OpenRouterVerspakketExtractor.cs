@@ -382,22 +382,36 @@ public sealed class OpenRouterVerspakketExtractor(
 
     private static string ExtractMessageContent(string responseBody)
     {
-        using var document = JsonDocument.Parse(responseBody);
+        JsonDocument document;
 
-        if (!document.RootElement.TryGetProperty("choices", out var choices)
-            || choices.GetArrayLength() == 0
-            || !choices[0].TryGetProperty("message", out var message)
-            || !message.TryGetProperty("content", out var content))
+        try
         {
-            throw new ExternalServiceException("De AI-provider gaf geen bruikbaar antwoord terug.");
+            document = JsonDocument.Parse(responseBody);
+        }
+        catch (JsonException ex)
+        {
+            throw new ExternalServiceException("De AI-provider gaf geen geldig JSON-antwoord terug.", ex);
         }
 
-        return content.ValueKind switch
+        using (document)
         {
-            JsonValueKind.String => content.GetString() ?? string.Empty,
-            JsonValueKind.Array => string.Concat(content.EnumerateArray().Select(ExtractTextPart)),
-            _ => throw new ExternalServiceException("De AI-provider gaf geen bruikbaar antwoord terug.")
-        };
+            var root = document.RootElement;
+
+            if (!root.TryGetProperty("choices", out var choices)
+                || choices.GetArrayLength() == 0
+                || !choices[0].TryGetProperty("message", out var message)
+                || !message.TryGetProperty("content", out var content))
+            {
+                throw new ExternalServiceException("De AI-provider gaf geen bruikbaar antwoord terug.");
+            }
+
+            return content.ValueKind switch
+            {
+                JsonValueKind.String => content.GetString() ?? string.Empty,
+                JsonValueKind.Array => string.Concat(content.EnumerateArray().Select(ExtractTextPart)),
+                _ => throw new ExternalServiceException("De AI-provider gaf geen bruikbaar antwoord terug.")
+            };
+        }
     }
 
     private static string? ExtractTextPart(JsonElement part) =>

@@ -68,6 +68,8 @@ public sealed partial class UpdateVerspakket
                     throw new ValidationException("Allergenen mogen niet dubbel voorkomen.");
             }
 
+            var decodedFotos = VerspakketFotoValidator.DecodeAll(request.Fotos);
+
             var verspakket = await context.Verspaketten
                 .Include(v => v.Fotos)
                 .Include(v => v.Ingredienten)
@@ -106,12 +108,12 @@ public sealed partial class UpdateVerspakket
                         .ToListAsync(cancellationToken));
 
                 var now = DateTime.UtcNow;
-                foreach (var foto in request.Fotos)
+                foreach (var foto in decodedFotos)
                 {
                     verspakket.AddFoto(new Domain.Entities.VerspakketFoto
                     {
                         Id = Guid.NewGuid(),
-                        Data = Convert.FromBase64String(foto.Base64Data),
+                        Data = foto.Data,
                         IsMainImage = foto.IsMainImage,
                         VerspakketId = verspakket.Id,
                         CreatedAt = now,

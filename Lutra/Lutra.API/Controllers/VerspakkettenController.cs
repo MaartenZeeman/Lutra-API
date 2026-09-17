@@ -3,6 +3,7 @@ using Lutra.API.Requests;
 using Lutra.Application.Models.Verspakketten;
 using Lutra.Application.Verspakketten;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Lutra.API.Controllers;
 
@@ -125,8 +126,10 @@ public class VerspakkettenController(IMediator mediator) : ControllerBase
     /// <param name="cancellationToken">Cancellation token for the request.</param>
     /// <returns>Returns 202 Accepted with the background command job identifier.</returns>
     [HttpPost("import")]
+    [EnableRateLimiting("verspakket-import")]
     [ProducesResponseType(typeof(EnqueueImportVerspakket.Response), StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<EnqueueImportVerspakket.Response>> Import([FromBody] ImportVerspakketRequest request, CancellationToken cancellationToken = default)
     {
         var result = await mediator.SendCommandAsync<EnqueueImportVerspakket.Command, EnqueueImportVerspakket.Response>(

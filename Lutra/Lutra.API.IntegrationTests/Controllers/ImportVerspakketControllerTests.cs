@@ -124,6 +124,32 @@ public class ImportVerspakketControllerTests(LutraApiFactory factory) : Integrat
     }
 
     [Fact]
+    public async Task Post_ReturnsTooManyRequests_WhenQueueIsFull()
+    {
+        await SeedManyAsync(Enumerable.Range(0, 50).Select(i => new BackgroundCommandJob
+        {
+            Id = Guid.NewGuid(),
+            Type = BackgroundCommandType.ImportVerspakket,
+            Payload = "{}",
+            DeduplicationKey = $"https://www.ah.nl/product/{i}",
+            ActiveDeduplicationKey = $"https://www.ah.nl/product/{i}",
+            Status = BackgroundCommandStatus.Queued,
+            IsActive = true,
+            AttemptCount = 0,
+            NextAttemptAt = DateTime.UtcNow,
+            ConcurrencyStamp = Guid.NewGuid(),
+            CreatedAt = DateTime.UtcNow,
+            ModifiedAt = DateTime.UtcNow
+        }));
+
+        var response = await Client.PostAsJsonAsync(
+            "/api/verspakketten/import",
+            new { url = "https://www.ah.nl/product/queue-full" });
+
+        response.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
+    }
+
+    [Fact]
     public async Task GetStatus_UnknownId_ReturnsNotFound()
     {
         var response = await Client.GetAsync($"/api/background-commands/{Guid.NewGuid()}");

@@ -113,6 +113,45 @@ public class SupermarktenControllerTests(LutraApiFactory factory)
         body!.Supermarkten.Should().BeEmpty();
     }
 
+    [Fact]
+    public async Task Get_Pagination_ClampsTakeToMaxPageSize()
+    {
+        await SeedManyAsync(Enumerable.Range(0, 201).Select(i => new Supermarkt
+        {
+            Id = Guid.NewGuid(),
+            Naam = $"Supermarkt {i:D3}",
+            CreatedAt = DateTime.UtcNow,
+            ModifiedAt = DateTime.UtcNow
+        }));
+
+        var response = await Client.GetAsync("/api/supermarkten?take=1000");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<GetSupermarkten.Response>();
+        body!.Supermarkten.Should().HaveCount(200);
+    }
+
+    [Fact]
+    public async Task Get_Pagination_NegativeSkipAndNonPositiveTake_AreClamped()
+    {
+        await SeedAsync(new Supermarkt
+        {
+            Id = Guid.NewGuid(), Naam = "Albert Heijn",
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        });
+        await SeedAsync(new Supermarkt
+        {
+            Id = Guid.NewGuid(), Naam = "Jumbo",
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        });
+
+        var response = await Client.GetAsync("/api/supermarkten?skip=-5&take=0");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<GetSupermarkten.Response>();
+        body!.Supermarkten.Should().ContainSingle().Which.Naam.Should().Be("Albert Heijn");
+    }
+
     // ── GET /api/supermarkten — sorting ───────────────────────────────────────
 
     [Fact]

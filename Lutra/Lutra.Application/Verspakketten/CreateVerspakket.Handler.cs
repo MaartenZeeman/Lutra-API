@@ -56,6 +56,8 @@ public sealed partial class CreateVerspakket
                     throw new ValidationException("Allergenen mogen niet dubbel voorkomen.");
             }
 
+            var decodedFotos = VerspakketFotoValidator.DecodeAll(request.Fotos);
+
             var now = DateTime.UtcNow;
             var verspakket = new Domain.Entities.Verspakket
             {
@@ -84,14 +86,14 @@ public sealed partial class CreateVerspakket
                 });
             }
 
-            if (request.Fotos is { Count: > 0 })
+            if (decodedFotos.Count > 0)
             {
-                foreach (var foto in request.Fotos)
+                foreach (var foto in decodedFotos)
                 {
                     verspakket.AddFoto(new Domain.Entities.VerspakketFoto
                     {
                         Id = Guid.NewGuid(),
-                        Data = Convert.FromBase64String(foto.Base64Data),
+                        Data = foto.Data,
                         IsMainImage = foto.IsMainImage,
                         VerspakketId = verspakket.Id,
                         CreatedAt = now,

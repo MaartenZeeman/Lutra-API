@@ -10,8 +10,14 @@ public sealed partial class GetVerspakketten
 {
     public sealed class Handler(ILutraDbContext context) : IQueryHandler<Query, Response>
     {
+        /// <summary>Upper bound on page size so a client cannot force the API to load the whole table.</summary>
+        public const int MaxPageSize = 200;
+
         public async Task<Response> Handle(Query request, CancellationToken cancellationToken)
         {
+            var skip = Math.Max(0, request.Skip);
+            var take = Math.Clamp(request.Take, 1, MaxPageSize);
+
             var query = context.Verspaketten
                 .Where(w => w.DeletedAt == null)
                 .AsNoTracking();
@@ -38,8 +44,8 @@ public sealed partial class GetVerspakketten
             };
 
             var verspakketten = await sorted
-                .Skip(request.Skip)
-                .Take(request.Take)
+                .Skip(skip)
+                .Take(take)
                 .Select(v => new VerspakketSummary
                 {
                     Id = v.Id,

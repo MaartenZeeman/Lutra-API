@@ -37,7 +37,7 @@ public class CreateSupermarktHandlerTests
     }
 
     [Fact]
-    public async Task Handle_EmptyNaam_ThrowsArgumentException()
+    public async Task Handle_EmptyNaam_ThrowsValidationException()
     {
         var act = () => _handler.Handle(new CreateSupermarkt.Command("  "), CancellationToken.None);
 
@@ -45,7 +45,7 @@ public class CreateSupermarktHandlerTests
     }
 
     [Fact]
-    public async Task Handle_NaamTooLong_ThrowsArgumentException()
+    public async Task Handle_NaamTooLong_ThrowsValidationException()
     {
         var act = () => _handler.Handle(new CreateSupermarkt.Command(new string('a', 51)), CancellationToken.None);
 

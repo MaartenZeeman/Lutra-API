@@ -78,6 +78,68 @@ public class CreateVerspakketWithFotosHandlerTests
     }
 
     [Fact]
+    public async Task Handle_InvalidBase64Foto_ThrowsValidationException()
+    {
+        var supermarktId = Guid.NewGuid();
+        SetupContext(supermarktId);
+
+        var fotos = new List<VerspakketFoto> { new("not-valid-base64!!", IsMainImage: true) };
+        var command = new CreateVerspakket.Command("Pakket", 999, 2, supermarktId, null, fotos);
+
+        var act = () => _handler.Handle(command, CancellationToken.None);
+
+        await act.Should().ThrowAsync<Lutra.Application.Exceptions.ValidationException>();
+    }
+
+    [Fact]
+    public async Task Handle_TooManyFotos_ThrowsValidationException()
+    {
+        var supermarktId = Guid.NewGuid();
+        SetupContext(supermarktId);
+
+        var fotos = Enumerable.Range(0, VerspakketFotoValidator.MaxFotos + 1)
+            .Select(_ => new VerspakketFoto(ValidBase64Png, IsMainImage: false))
+            .ToList();
+        var command = new CreateVerspakket.Command("Pakket", 999, 2, supermarktId, null, fotos);
+
+        var act = () => _handler.Handle(command, CancellationToken.None);
+
+        await act.Should().ThrowAsync<Lutra.Application.Exceptions.ValidationException>();
+    }
+
+    [Fact]
+    public async Task Handle_FotoLargerThanMaxBytes_ThrowsValidationException()
+    {
+        var supermarktId = Guid.NewGuid();
+        SetupContext(supermarktId);
+
+        var oversized = Convert.ToBase64String(new byte[VerspakketFotoValidator.MaxFotoBytes + 1]);
+        var fotos = new List<VerspakketFoto> { new(oversized, IsMainImage: true) };
+        var command = new CreateVerspakket.Command("Pakket", 999, 2, supermarktId, null, fotos);
+
+        var act = () => _handler.Handle(command, CancellationToken.None);
+
+        await act.Should().ThrowAsync<Lutra.Application.Exceptions.ValidationException>();
+    }
+
+    [Fact]
+    public async Task Handle_TotalFotoBytesTooLarge_ThrowsValidationException()
+    {
+        var supermarktId = Guid.NewGuid();
+        SetupContext(supermarktId);
+
+        var fiveMiBFoto = Convert.ToBase64String(new byte[VerspakketFotoValidator.MaxFotoBytes]);
+        var fotos = Enumerable.Range(0, 5)
+            .Select(_ => new VerspakketFoto(fiveMiBFoto, IsMainImage: false))
+            .ToList();
+        var command = new CreateVerspakket.Command("Pakket", 999, 2, supermarktId, null, fotos);
+
+        var act = () => _handler.Handle(command, CancellationToken.None);
+
+        await act.Should().ThrowAsync<Lutra.Application.Exceptions.ValidationException>();
+    }
+
+    [Fact]
     public async Task Handle_FotoBase64Decoded_StoresCorrectBytes()
     {
         var supermarktId = Guid.NewGuid();

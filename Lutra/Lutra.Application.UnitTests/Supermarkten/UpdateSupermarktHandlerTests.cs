@@ -52,7 +52,7 @@ public class UpdateSupermarktHandlerTests
     }
 
     [Fact]
-    public async Task Handle_EmptyNaam_ThrowsArgumentException()
+    public async Task Handle_EmptyNaam_ThrowsValidationException()
     {
         var supermarkt = new Domain.Entities.Supermarkt
         {

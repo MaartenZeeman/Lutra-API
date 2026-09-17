@@ -1,8 +1,10 @@
 using FluentAssertions;
+using Lutra.Application.BackgroundCommands;
 using Lutra.Application.Exceptions;
 using Lutra.Application.Interfaces;
 using Lutra.Application.Verspakketten;
 using Lutra.Domain.Entities;
+using Microsoft.Extensions.Options;
 using Moq;
 using Moq.EntityFrameworkCore;
 
@@ -16,7 +18,9 @@ public class EnqueueImportVerspakketHandlerTests
     public EnqueueImportVerspakketHandlerTests()
     {
         _contextMock.Setup(c => c.BackgroundCommandJobs).ReturnsDbSet(new List<BackgroundCommandJob>());
-        _handler = new EnqueueImportVerspakket.Handler(_contextMock.Object);
+        _handler = new EnqueueImportVerspakket.Handler(
+            _contextMock.Object,
+            Options.Create(new BackgroundCommandsOptions()));
     }
 
     [Fact]
@@ -49,6 +53,37 @@ public class EnqueueImportVerspakketHandlerTests
         saved.ActiveDeduplicationKey.Should().Be("https://www.ah.nl/product/123");
         saved.IsActive.Should().BeTrue();
         saved.AttemptCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Handle_TooManyActiveJobs_ThrowsTooManyRequestsException()
+    {
+        _contextMock.Setup(c => c.BackgroundCommandJobs).ReturnsDbSet(
+            Enumerable.Range(0, 3).Select(_ => new BackgroundCommandJob
+            {
+                Id = Guid.NewGuid(),
+                Type = BackgroundCommandType.ImportVerspakket,
+                Payload = "{}",
+                DeduplicationKey = Guid.NewGuid().ToString(),
+                ActiveDeduplicationKey = Guid.NewGuid().ToString(),
+                Status = BackgroundCommandStatus.Queued,
+                IsActive = true,
+                AttemptCount = 0,
+                NextAttemptAt = DateTime.UtcNow,
+                ConcurrencyStamp = Guid.NewGuid(),
+                CreatedAt = DateTime.UtcNow,
+                ModifiedAt = DateTime.UtcNow
+            }).ToList());
+
+        var handler = new EnqueueImportVerspakket.Handler(
+            _contextMock.Object,
+            Options.Create(new BackgroundCommandsOptions { MaxPendingJobs = 3 }));
+
+        var act = () => handler.Handle(
+            new EnqueueImportVerspakket.Command("https://www.ah.nl/product/999"),
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<TooManyRequestsException>();
     }
 
     [Fact]

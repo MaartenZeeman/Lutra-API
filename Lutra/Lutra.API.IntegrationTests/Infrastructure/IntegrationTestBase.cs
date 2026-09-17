@@ -49,4 +49,13 @@ public abstract class IntegrationTestBase : IClassFixture<LutraApiFactory>, IAsy
         await db.SaveChangesAsync(CancellationToken.None);
         return entity;
     }
+
+    /// <summary>Adds many entities in a single round trip, for tests that need bulk data.</summary>
+    protected async ValueTask SeedManyAsync<T>(IEnumerable<T> entities) where T : class
+    {
+        using var scope = Factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ILutraDbContext>() as LutraDbContext;
+        db!.Set<T>().AddRange(entities);
+        await db.SaveChangesAsync(CancellationToken.None);
+    }
 }

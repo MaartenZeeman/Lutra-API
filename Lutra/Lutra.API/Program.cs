@@ -7,9 +7,11 @@ using Lutra.Application.Verspakketten;
 using Lutra.Application.Interfaces;
 using Lutra.Infrastructure.OpenRouter;
 using Lutra.Infrastructure.Sql;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Scalar.AspNetCore;
+using System.Threading.RateLimiting;
 
 namespace Lutra.API
 {
@@ -18,6 +20,11 @@ namespace Lutra.API
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            // Reject oversized request bodies early; the largest legitimate payload is a verspakket
+            // with a bounded set of base64 photos (see VerspakketFotoValidator).
+            builder.WebHost.ConfigureKestrel(options =>
+                options.Limits.MaxRequestBodySize = 32 * 1024 * 1024);
 
             builder.Services.AddCors(options =>
             {
@@ -64,6 +71,21 @@ namespace Lutra.API
             builder.Services.AddControllers();
             builder.Services.AddOpenApi();
 
+            builder.Services.AddRateLimiter(options =>
+            {
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+                options.AddPolicy("verspakket-import", httpContext =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 10,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueLimit = 0
+                        }));
+            });
+
 
             var app = builder.Build();
 
@@ -73,12 +95,20 @@ namespace Lutra.API
                 app.MapScalarApiReference();
                 app.MapGet("/", () => Results.Redirect("/scalar/v1")).ExcludeFromDescription();
             }
+            else
+            {
+                app.UseHsts();
+            }
 
             app.UseHttpsRedirection();
 
             app.UseCors("AllowLocalDevelopment");
 
+            app.UseRouting();
+
             app.UseAuthorization();
+
+            app.UseRateLimiter();
 
             app.UseMiddleware<ExceptionHandlingMiddleware>();
 

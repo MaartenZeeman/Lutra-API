@@ -11,6 +11,9 @@ namespace Lutra.API.IntegrationTests.Controllers;
 public class VerspakkettenControllerTests(LutraApiFactory factory)
     : IntegrationTestBase(factory)
 {
+    // 1x1 white PNG as base64
+    private const string ValidBase64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI6QAAAABJRU5ErkJggg==";
+
     // ── GET /api/verspakketten ────────────────────────────────────────────────
 
     [Fact]
@@ -163,6 +166,47 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
+    [Fact]
+    public async Task Post_ReturnsBadRequest_WhenFotoBase64Invalid()
+    {
+        var supermarkt = await SeedAsync(new Supermarkt
+        {
+            Id = Guid.NewGuid(), Naam = "Picnic",
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        });
+
+        var request = new CreateVerspakketRequest(
+            "Pakket",
+            999,
+            2,
+            supermarkt.Id,
+            Fotos: [new VerspakketFotoRequest("not-valid-base64!!", true)]);
+
+        var response = await Client.PostAsJsonAsync("/api/verspakketten", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Post_ReturnsBadRequest_WhenTooManyFotos()
+    {
+        var supermarkt = await SeedAsync(new Supermarkt
+        {
+            Id = Guid.NewGuid(), Naam = "Picnic",
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        });
+
+        var fotos = Enumerable.Range(0, 11)
+            .Select(_ => new VerspakketFotoRequest(ValidBase64Png, false))
+            .ToList();
+
+        var request = new CreateVerspakketRequest("Pakket", 999, 2, supermarkt.Id, Fotos: fotos);
+
+        var response = await Client.PostAsJsonAsync("/api/verspakketten", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
     // ── PUT /api/verspakketten/{id} ───────────────────────────────────────────
 
     [Fact]
@@ -220,6 +264,33 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
         var response = await Client.PutAsJsonAsync($"/api/verspakketten/{verspakket.Id}", request);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Update_ReturnsBadRequest_WhenFotoBase64Invalid()
+    {
+        var supermarkt = await SeedAsync(new Supermarkt
+        {
+            Id = Guid.NewGuid(), Naam = "AH",
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        });
+        var verspakket = await SeedAsync(new Verspakket
+        {
+            Id = Guid.NewGuid(), Naam = "Pakket", AantalPersonen = 2,
+            SupermarktId = supermarkt.Id,
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        });
+
+        var request = new UpdateVerspakketRequest(
+            "Pakket",
+            999,
+            2,
+            supermarkt.Id,
+            Fotos: [new VerspakketFotoRequest("not-valid-base64!!", true)]);
+
+        var response = await Client.PutAsJsonAsync($"/api/verspakketten/{verspakket.Id}", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     // ── GET /api/verspakketten — pagination & sorting ─────────────────────────
@@ -286,6 +357,56 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
         var body = await response.Content.ReadFromJsonAsync<GetVerspakketten.Response>();
         body!.Verspakketten.First().Naam.Should().Be("Zomerpakket");
         body.Verspakketten.Last().Naam.Should().Be("Aardappel Pakket");
+    }
+
+    [Fact]
+    public async Task Get_Pagination_ClampsTakeToMaxPageSize()
+    {
+        var supermarkt = await SeedAsync(new Supermarkt
+        {
+            Id = Guid.NewGuid(), Naam = "AH",
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        });
+        await SeedManyAsync(Enumerable.Range(0, 201).Select(i => new Verspakket
+        {
+            Id = Guid.NewGuid(),
+            Naam = $"Pakket {i:D3}",
+            AantalPersonen = 2,
+            SupermarktId = supermarkt.Id,
+            CreatedAt = DateTime.UtcNow,
+            ModifiedAt = DateTime.UtcNow
+        }));
+
+        var response = await Client.GetAsync("/api/verspakketten?take=1000");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<GetVerspakketten.Response>();
+        body!.Verspakketten.Should().HaveCount(200);
+    }
+
+    [Fact]
+    public async Task Get_Pagination_NegativeSkipAndNonPositiveTake_AreClamped()
+    {
+        var supermarkt = await SeedAsync(new Supermarkt
+        {
+            Id = Guid.NewGuid(), Naam = "AH",
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        });
+        await SeedManyAsync(Enumerable.Range(0, 2).Select(i => new Verspakket
+        {
+            Id = Guid.NewGuid(),
+            Naam = $"Pakket {i}",
+            AantalPersonen = 2,
+            SupermarktId = supermarkt.Id,
+            CreatedAt = DateTime.UtcNow,
+            ModifiedAt = DateTime.UtcNow
+        }));
+
+        var response = await Client.GetAsync("/api/verspakketten?skip=-5&take=0");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<GetVerspakketten.Response>();
+        body!.Verspakketten.Should().ContainSingle();
     }
 
     // ── POST /api/verspakketten/{id}/beoordelingen ────────────────────────────
