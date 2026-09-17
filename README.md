@@ -1,6 +1,7 @@
 # Lutra API
 
-REST API for Verspakketten, built with .NET 10 and PostgreSQL.
+REST API for Verspakketten, built with .NET 10 and PostgreSQL. The solution and all projects live
+under `Lutra/`; run the commands below from that directory.
 
 ## Prerequisites
 
@@ -11,8 +12,8 @@ REST API for Verspakketten, built with .NET 10 and PostgreSQL.
 
 ### 1. Build the image
 
-Run this command from the **root of the repository** (where `Lutra.sln` lives), because the
-Dockerfile copies the full solution source tree during the build:
+Run this command from the `Lutra/` directory (where `Lutra.sln` lives), because the Dockerfile
+copies the full solution source tree during the build:
 
 ```bash
 docker build -f Lutra.API/Dockerfile -t lutra-api .
