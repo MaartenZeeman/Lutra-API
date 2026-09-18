@@ -20,21 +20,24 @@ public class VerspakkettenController(IMediator mediator) : ControllerBase
     /// </summary>
     /// <param name="skip">The number of items to skip. Default: 0.</param>
     /// <param name="take">The maximum number of items to return. Default: 50.</param>
+    /// <param name="search">Optional case-insensitive search term matched against the verspakket name.</param>
     /// <param name="sortField">The field to sort by: Naam, PrijsInCenten, AverageCijferSmaak, or AverageCijferBereiden. Default: Naam.</param>
     /// <param name="sortDirection">The sort direction: Ascending or Descending. Default: Ascending.</param>
     /// <param name="cancellationToken">Cancellation token for the request.</param>
     /// <returns>The requested verspakket page.</returns>
     [HttpGet]
     [ProducesResponseType(typeof(GetVerspakketten.Response), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<GetVerspakketten.Response> Get(
         int skip = 0,
         int take = 50,
+        string? search = null,
         VerspakketSortField sortField = VerspakketSortField.Naam,
         SortDirection sortDirection = SortDirection.Ascending,
         CancellationToken cancellationToken = default)
     {
         return await mediator.SendQueryAsync<GetVerspakketten.Query, GetVerspakketten.Response>(
-            new GetVerspakketten.Query(skip, take, sortField, sortDirection), cancellationToken);
+            new GetVerspakketten.Query(skip, take, sortField, sortDirection, search), cancellationToken);
     }
 
     /// <summary>
@@ -68,6 +71,7 @@ public class VerspakkettenController(IMediator mediator) : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(CreateVerspakket.Response), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CreateVerspakket.Response>> Post([FromBody] CreateVerspakketRequest request, CancellationToken cancellationToken = default)
     {
         var command = new CreateVerspakket.Command(
@@ -152,6 +156,7 @@ public class VerspakkettenController(IMediator mediator) : ControllerBase
     [HttpPost("{id:guid}/beoordelingen")]
     [ProducesResponseType(typeof(AddBeoordeling.Response), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<AddBeoordeling.Response>> AddBeoordeling(Guid id, [FromBody] AddBeoordelingRequest request, CancellationToken cancellationToken = default)
     {
         var command = new AddBeoordeling.Command(id, request.CijferSmaak, request.CijferBereiden, request.Aanbevolen, request.Tekst);

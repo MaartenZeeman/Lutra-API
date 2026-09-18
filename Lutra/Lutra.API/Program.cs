@@ -2,6 +2,7 @@
 using Cortex.Mediator.DependencyInjection;
 using Lutra.API.BackgroundCommands;
 using Lutra.API.Middleware;
+using Lutra.API.OpenApi;
 using Lutra.Application.BackgroundCommands;
 using Lutra.Application.Verspakketten;
 using Lutra.Application.Interfaces;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Scalar.AspNetCore;
+using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 
 namespace Lutra.API
@@ -68,8 +70,15 @@ namespace Lutra.API
             builder.Services.AddScoped<BackgroundCommandProcessor>();
             builder.Services.AddHostedService<BackgroundCommandWorker>();
 
-            builder.Services.AddControllers();
-            builder.Services.AddOpenApi();
+            builder.Services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    // ASP.NET Core's web defaults allow numbers to be read from strings, which
+                    // makes the OpenAPI contract describe every number as number-or-string and
+                    // complicates generated frontend types. Require real JSON numbers instead.
+                    options.JsonSerializerOptions.NumberHandling = JsonNumberHandling.Strict;
+                });
+            builder.Services.AddLutraOpenApi();
 
             builder.Services.AddRateLimiter(options =>
             {
@@ -87,9 +96,14 @@ namespace Lutra.API
             });
 
 
+            builder.Services.ConfigureHttpJsonOptions(options =>
+            {
+                options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict;
+            });
+
             var app = builder.Build();
 
-            if (app.Environment.IsDevelopment())
+            if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
             {
                 app.MapOpenApi();
                 app.MapScalarApiReference();

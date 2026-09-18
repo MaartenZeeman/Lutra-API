@@ -1,5 +1,17 @@
 # Changelog
 
+## 18 September 2026
+
+- Added `docs/api.md`, a complete HTTP API reference covering every endpoint with curl examples and request/response JSON, the enum tables (allergenen, eenheden, voedingswaardebasissen, sort fields, background-command status), data models, limits, validation rules, and the status-code/error mapping. `README.md` now links to it as the API reference.
+- Updated `AGENTS.md` with an API Documentation section that makes `docs/api.md` the single source of truth, requires worked examples and in-sync reference tables for new or changed endpoints, and adds a change-workflow step to update the documentation and the changelog whenever the API contract changes.
+
+## 18 September 2026
+
+- Added an optional `search` query parameter to `GET /api/verspakketten` that filters on the verspakket name case-insensitively (trimmed, whitespace-only treated as no filter, 255-character maximum). The filter runs before sorting and pagination, ordering now ends with an `Id` tie-breaker so offset pages stay stable, and rating/price sorting keeps unrated and unpriced verspakketten last in both directions. Integration tests cover matching, trimming, no-match, filtering-before-pagination, the length limit, score/price ordering and stable pagination.
+- Fixed the generated OpenAPI contract: nested use-case response records (all named `Response`) now use their declaring type as a prefix, so components are named `GetVerspakkettenResponse`, `GetVerspakketResponse`, and so on instead of colliding on `Response`. The API also emits `Lutra.API/OpenApi/lutra-v1.json` at build time via `Microsoft.Extensions.ApiDescription.Server`, and CI fails when the committed contract drifts from a fresh build.
+- Enforced strict JSON number handling (`ConfigureHttpJsonOptions` and MVC `AddJsonOptions`), so numbers are neither accepted nor documented as strings. The regenerated contract now describes numeric fields as `integer`/`number` instead of `integer | string`, which keeps the frontend's generated types simple.
+- Wired the Vue frontend into the Aspire AppHost with `Aspire.Hosting.JavaScript`: `AddViteApp` starts the sibling `lutra-Vue` repository and receives `VITE_API_BASE_URL` from the API's HTTPS endpoint, so the browser keeps using same-origin `/api` through the Vite proxy.
+
 ## 17 September 2026
 
 - Added a GitHub Actions workflow (`.github/workflows/build-and-test.yml`) that restores and builds `Lutra.sln` on .NET 10 and runs the Application, OpenRouter, and API integration test projects on every push to `main`.

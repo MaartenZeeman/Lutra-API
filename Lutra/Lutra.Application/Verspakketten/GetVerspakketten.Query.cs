@@ -8,5 +8,6 @@ public sealed partial class GetVerspakketten
         int Skip,
         int Take,
         VerspakketSortField SortField = VerspakketSortField.Naam,
-        SortDirection SortDirection = SortDirection.Ascending) : IQuery<Response>;
+        SortDirection SortDirection = SortDirection.Ascending,
+        string? Search = null) : IQuery<Response>;
 }

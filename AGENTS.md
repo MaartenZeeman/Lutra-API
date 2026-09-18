@@ -39,6 +39,13 @@
 - `Program.cs` enables HSTS outside Development and caps request bodies at 32 MiB; the retail `HttpClient` uses `PublicNetworkHttpHandler` for SSRF protection via `OpenRouter:AllowedHosts`/`AllowedImageHosts`.
 - The OpenRouter integration is configured under the `OpenRouter` section. Never commit a real API key; supply `OpenRouter:ApiKey` through user-secrets or environment variables (`OpenRouter__ApiKey`).
 
+## API Documentation
+
+- `docs/api.md` at the repository root is the single source of truth for the HTTP API. Whenever the API surface changes—new or renamed endpoints, changed request or response shapes, new or changed enum values, changed validation rules, limits, rate limits, status codes/error mapping, or background-command behavior—update `docs/api.md` in the same change.
+- New or changed endpoints must include a worked example: a curl invocation plus the request and response JSON (success and relevant error cases), and the enums, limits, and status-code reference tables must be kept in sync with the Application/Domain enums and the `ExceptionHandlingMiddleware` mapping.
+- `README.md` links to `docs/api.md` as the API reference; keep the README's setup and configuration sections consistent with the contracts in `docs/api.md`.
+- Interactive OpenAPI docs (Scalar) are served by the API in Development at `/scalar/v1` (OpenAPI at `/openapi/v1.json`); the human-readable `docs/api.md` must not drift from that generated output.
+
 ## Aspire and Migration Rules
 
 - Keep `Lutra.AppHost` responsible for orchestration only and preserve the persistent PostgreSQL container unless the change explicitly requires otherwise.
@@ -93,6 +100,7 @@ dotnet run --project Lutra.AppHost/Lutra.AppHost.csproj
 
 - Read the relevant file before editing.
 - Make the smallest change that solves the problem and reuse existing repository patterns instead of inventing new ones.
+- When the change affects the API contract (endpoints, request/response bodies, enums, limits, error mapping, or background-command behavior), update `docs/api.md` in the same change with the new or adapted worked examples and keep the reference tables in sync; mention the documentation update in the changelog entry.
 - Run or request build/test verification after changes when appropriate; the build must finish with zero warnings (see Verification), and avoid broad refactors unless explicitly requested.
 
 

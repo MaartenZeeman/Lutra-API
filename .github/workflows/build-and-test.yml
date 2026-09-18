@@ -28,6 +28,13 @@ jobs:
       - name: Build
         run: dotnet build Lutra.sln --configuration Release --no-restore
 
+      - name: Verify OpenAPI contract is up to date
+        run: |
+          git diff --exit-code -- Lutra.API/OpenApi/lutra-v1.json || {
+            echo "::error::The generated OpenAPI contract is stale. Rebuild and commit Lutra.API/OpenApi/lutra-v1.json.";
+            exit 1;
+          }
+
       - name: Run Application unit tests
         run: dotnet run --project Lutra.Application.UnitTests/Lutra.Application.UnitTests.csproj --configuration Release --no-build
 

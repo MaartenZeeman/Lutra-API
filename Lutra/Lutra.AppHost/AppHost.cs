@@ -16,4 +16,11 @@ var apiService = builder.AddProject<Projects.Lutra_API>("apiservice")
     .WithReference(db)
     .WaitForCompletion(migrator);
 
+// The Vue frontend proxies /api to the discovered API endpoint, so the browser keeps
+// talking to the Vite origin and no CORS configuration is required.
+builder.AddViteApp("frontend", "../../../lutra-Vue")
+    .WithReference(apiService)
+    .WithEnvironment("VITE_API_BASE_URL", apiService.GetEndpoint("https"))
+    .WithExternalHttpEndpoints();
+
 builder.Build().Run();

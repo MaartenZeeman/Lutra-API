@@ -409,6 +409,147 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
         body!.Verspakketten.Should().ContainSingle();
     }
 
+    // ── GET /api/verspakketten — search ───────────────────────────────────────
+
+    [Fact]
+    public async Task Get_Search_MatchesNameCaseInsensitively()
+    {
+        var supermarktId = await SeedSupermarktAsync();
+        await SeedVerspakketAsync(supermarktId, "Lente Pakket");
+        await SeedVerspakketAsync(supermarktId, "Herfst Pakket");
+
+        var body = await GetVerspakkettenAsync("?search=LENTE");
+
+        body.Verspakketten.Should().ContainSingle();
+        body.Verspakketten.Single().Naam.Should().Be("Lente Pakket");
+    }
+
+    [Fact]
+    public async Task Get_Search_MatchesSubstring()
+    {
+        var supermarktId = await SeedSupermarktAsync();
+        await SeedVerspakketAsync(supermarktId, "Pasta Pakket");
+        await SeedVerspakketAsync(supermarktId, "Pasta Pesto");
+        await SeedVerspakketAsync(supermarktId, "Soep Pakket");
+
+        var body = await GetVerspakkettenAsync("?search=pasta");
+
+        body.Verspakketten.Should().HaveCount(2);
+        body.Verspakketten.Should().OnlyContain(v => v.Naam.StartsWith("Pasta"));
+    }
+
+    [Fact]
+    public async Task Get_Search_WhitespaceOnly_ReturnsAllVerspakketten()
+    {
+        var supermarktId = await SeedSupermarktAsync();
+        await SeedVerspakketAsync(supermarktId, "Lente Pakket");
+        await SeedVerspakketAsync(supermarktId, "Herfst Pakket");
+
+        var body = await GetVerspakkettenAsync("?search=%20%20");
+
+        body.Verspakketten.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task Get_Search_ReturnsEmptyList_WhenNothingMatches()
+    {
+        var supermarktId = await SeedSupermarktAsync();
+        await SeedVerspakketAsync(supermarktId, "Lente Pakket");
+
+        var body = await GetVerspakkettenAsync("?search=bestaatniet");
+
+        body.Verspakketten.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Get_Search_IsAppliedBeforePagination()
+    {
+        var supermarktId = await SeedSupermarktAsync();
+        await SeedVerspakketAsync(supermarktId, "Pasta Pakket A");
+        await SeedVerspakketAsync(supermarktId, "Pasta Pakket B");
+        await SeedVerspakketAsync(supermarktId, "Pasta Pakket C");
+        await SeedVerspakketAsync(supermarktId, "Soep Pakket");
+
+        var body = await GetVerspakkettenAsync("?search=pasta&skip=0&take=2");
+
+        body.Verspakketten.Should().HaveCount(2);
+        body.Verspakketten.Should().OnlyContain(v => v.Naam.StartsWith("Pasta"));
+    }
+
+    [Fact]
+    public async Task Get_Search_ReturnsBadRequest_WhenTermExceedsMaxLength()
+    {
+        var term = new string('a', GetVerspakketten.Handler.MaxSearchLength + 1);
+        var response = await Client.GetAsync($"/api/verspakketten?search={term}", TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    // ── GET /api/verspakketten — score and price ordering ─────────────────────
+
+    [Fact]
+    public async Task Get_SortByAverageCijferSmaakDescending_PutsHighestRatedFirst()
+    {
+        var supermarktId = await SeedSupermarktAsync();
+        await SeedVerspakketAsync(supermarktId, "Matig", beoordelingen: [(6, 6)]);
+        await SeedVerspakketAsync(supermarktId, "Heerlijk", beoordelingen: [(9, 7)]);
+        await SeedVerspakketAsync(supermarktId, "Goed", beoordelingen: [(8, 8)]);
+
+        var body = await GetVerspakkettenAsync("?sortField=AverageCijferSmaak&sortDirection=Descending");
+
+        body.Verspakketten.Select(v => v.Naam).Should().ContainInOrder("Heerlijk", "Goed", "Matig");
+    }
+
+    [Fact]
+    public async Task Get_SortByAverageCijferSmaak_KeepsUnratedVerspakkettenLast()
+    {
+        var supermarktId = await SeedSupermarktAsync();
+        await SeedVerspakketAsync(supermarktId, "Op smaak gerangschikt", beoordelingen: [(4, 4)]);
+        await SeedVerspakketAsync(supermarktId, "Onbeoordeeld");
+
+        var ascending = await GetVerspakkettenAsync("?sortField=AverageCijferSmaak");
+        ascending.Verspakketten.Select(v => v.Naam).Should().ContainInOrder("Op smaak gerangschikt", "Onbeoordeeld");
+
+        var descending = await GetVerspakkettenAsync("?sortField=AverageCijferSmaak&sortDirection=Descending");
+        descending.Verspakketten.Select(v => v.Naam).Should().ContainInOrder("Op smaak gerangschikt", "Onbeoordeeld");
+    }
+
+    [Fact]
+    public async Task Get_SortByPrijs_KeepsUnpricedVerspakkettenLast()
+    {
+        var supermarktId = await SeedSupermarktAsync();
+        await SeedVerspakketAsync(supermarktId, "Goedkoop", prijsInCenten: 500);
+        await SeedVerspakketAsync(supermarktId, "Duur", prijsInCenten: 2000);
+        await SeedVerspakketAsync(supermarktId, "Onbekend");
+
+        var ascending = await GetVerspakkettenAsync("?sortField=PrijsInCenten");
+        ascending.Verspakketten.Select(v => v.Naam).Should().ContainInOrder("Goedkoop", "Duur", "Onbekend");
+
+        var descending = await GetVerspakkettenAsync("?sortField=PrijsInCenten&sortDirection=Descending");
+        descending.Verspakketten.Select(v => v.Naam).Should().ContainInOrder("Duur", "Goedkoop", "Onbekend");
+    }
+
+    [Fact]
+    public async Task Get_Pagination_IsStable_WhenSortValuesAreEqual()
+    {
+        var supermarktId = await SeedSupermarktAsync();
+        await SeedManyAsync(Enumerable.Range(0, 4).Select(_ => new Verspakket
+        {
+            Id = Guid.NewGuid(),
+            Naam = "Gelijk Pakket",
+            AantalPersonen = 2,
+            SupermarktId = supermarktId,
+            CreatedAt = DateTime.UtcNow,
+            ModifiedAt = DateTime.UtcNow
+        }));
+
+        var firstPage = await GetVerspakkettenAsync("?sortField=Naam&take=2&skip=0");
+        var secondPage = await GetVerspakkettenAsync("?sortField=Naam&take=2&skip=2");
+
+        firstPage.Verspakketten.Select(v => v.Id)
+            .Should().NotIntersectWith(secondPage.Verspakketten.Select(v => v.Id));
+    }
+
     // ── POST /api/verspakketten/{id}/beoordelingen ────────────────────────────
 
     [Fact]
@@ -657,5 +798,60 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
         created.Verspakket.Voedingswaarden!.Single().Basis.Should().Be(VoedingswaardeBasis.PerPortie);
         created.Verspakket.Voedingswaarden.Single().EnergieKj.Should().Be(2723);
         created.Verspakket.Allergenen.Should().BeEquivalentTo(new[] { Allergeen.Melk });
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private async Task<Guid> SeedSupermarktAsync(string naam = "AH")
+    {
+        var supermarkt = await SeedAsync(new Supermarkt
+        {
+            Id = Guid.NewGuid(), Naam = naam,
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        });
+        return supermarkt.Id;
+    }
+
+    private async Task<Verspakket> SeedVerspakketAsync(
+        Guid supermarktId,
+        string naam,
+        int? prijsInCenten = null,
+        IReadOnlyList<(int Smaak, int Bereiden)>? beoordelingen = null)
+    {
+        var verspakket = new Verspakket
+        {
+            Id = Guid.NewGuid(),
+            Naam = naam,
+            PrijsInCenten = prijsInCenten,
+            AantalPersonen = 2,
+            SupermarktId = supermarktId,
+            CreatedAt = DateTime.UtcNow,
+            ModifiedAt = DateTime.UtcNow
+        };
+
+        foreach (var (smaak, bereiden) in beoordelingen ?? [])
+        {
+            verspakket.AddBeoordeling(new Beoordeling
+            {
+                Id = Guid.NewGuid(),
+                CijferSmaak = smaak,
+                CijferBereiden = bereiden,
+                Aanbevolen = true,
+                VerspakketId = verspakket.Id,
+                CreatedAt = DateTime.UtcNow,
+                ModifiedAt = DateTime.UtcNow
+            });
+        }
+
+        return await SeedAsync(verspakket);
+    }
+
+    private async Task<GetVerspakketten.Response> GetVerspakkettenAsync(string query)
+    {
+        var response = await Client.GetAsync($"/api/verspakketten{query}", TestContext.Current.CancellationToken);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<GetVerspakketten.Response>(TestContext.Current.CancellationToken);
+        body.Should().NotBeNull();
+        return body!;
     }
 }

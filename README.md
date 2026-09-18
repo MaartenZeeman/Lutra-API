@@ -3,6 +3,9 @@
 REST API for Verspakketten, built with .NET 10 and PostgreSQL. The solution and all projects live
 under `Lutra/`; run the commands below from that directory.
 
+The full HTTP API reference — every endpoint, request/response contract, enums, validation rules,
+limits and worked examples — lives in [`docs/api.md`](docs/api.md).
+
 ## Prerequisites
 
 - [Docker](https://docs.docker.com/get-docker/) installed and running
@@ -93,6 +96,8 @@ All settings can be overridden with environment variables using the `__` separat
 | `ASPNETCORE_ENVIRONMENT` | `Production` | Set to `Development` to enable Scalar API docs at `/scalar/v1` |
 
 ## Importing verspakketten
+
+See [`docs/api.md`](docs/api.md) for the full endpoint reference and worked examples.
 
 `POST /api/verspakketten/import` accepts `{ "url": "https://www.ah.nl/product/..." }`. Validation and
 URL normalization happen synchronously, then the import is queued as a durable background command.

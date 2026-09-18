@@ -1,0 +1,1480 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Lutra.API | v1",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/background-commands/{id}": {
+      "get": {
+        "tags": [
+          "BackgroundCommands"
+        ],
+        "summary": "Gets the current state of a background command job.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The background command job ID.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetBackgroundCommandResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Returns the API health status.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": { }
+            }
+          }
+        }
+      }
+    },
+    "/api/supermarkten": {
+      "get": {
+        "tags": [
+          "Supermarkten"
+        ],
+        "summary": "Gets a page of supermarkten.",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "description": "The number of items to skip.",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "description": "The maximum number of items to return.",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested supermarkt page.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSupermarktenResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Supermarkten"
+        ],
+        "summary": "Creates a new supermarkt.",
+        "requestBody": {
+          "description": "Cancellation token for the request.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupermarktRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupermarktRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupermarktRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSupermarktResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/supermarkten/{id}": {
+      "put": {
+        "tags": [
+          "Supermarkten"
+        ],
+        "summary": "Updates an existing supermarkt with the provided values.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The supermarkt identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Cancellation token for the request.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupermarktRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupermarktRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupermarktRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": { }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/verspakketten": {
+      "get": {
+        "tags": [
+          "Verspakketten"
+        ],
+        "summary": "Gets a page of verspakketten.",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "description": "The number of items to skip. Default: 0.",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "description": "The maximum number of items to return. Default: 50.",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Optional case-insensitive search term matched against the verspakket name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortField",
+            "in": "query",
+            "description": "The field to sort by: Naam, PrijsInCenten, AverageCijferSmaak, or AverageCijferBereiden. Default: Naam.",
+            "schema": {
+              "default": 0,
+              "$ref": "#/components/schemas/VerspakketSortField"
+            }
+          },
+          {
+            "name": "sortDirection",
+            "in": "query",
+            "description": "The sort direction: Ascending or Descending. Default: Ascending.",
+            "schema": {
+              "default": 0,
+              "$ref": "#/components/schemas/SortDirection"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetVerspakkettenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Verspakketten"
+        ],
+        "summary": "Creates a new verspakket.",
+        "requestBody": {
+          "description": "Cancellation token for the request.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVerspakketRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVerspakketRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVerspakketRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateVerspakketResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/verspakketten/{id}": {
+      "get": {
+        "tags": [
+          "Verspakketten"
+        ],
+        "summary": "Gets a specific verspakket by ID.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The verspakket ID.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetVerspakketResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Verspakketten"
+        ],
+        "summary": "Updates an existing verspakket with the provided values.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The verspakket identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Cancellation token for the request.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVerspakketRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVerspakketRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVerspakketRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": { }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/verspakketten/import": {
+      "post": {
+        "tags": [
+          "Verspakketten"
+        ],
+        "summary": "Queues a verspakket import from a retailer product page. The import runs in the background\r\nand can be monitored through the background command status endpoint.",
+        "requestBody": {
+          "description": "Cancellation token for the request.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportVerspakketRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportVerspakketRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportVerspakketRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnqueueImportVerspakketResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/verspakketten/{id}/beoordelingen": {
+      "post": {
+        "tags": [
+          "Verspakketten"
+        ],
+        "summary": "Adds a beoordeling to an existing verspakket.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The verspakket ID.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Cancellation token for the request.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddBeoordelingRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddBeoordelingRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddBeoordelingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddBeoordelingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AddBeoordelingRequest": {
+        "required": [
+          "cijferSmaak",
+          "cijferBereiden",
+          "aanbevolen",
+          "tekst"
+        ],
+        "type": "object",
+        "properties": {
+          "cijferSmaak": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cijferBereiden": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "aanbevolen": {
+            "type": "boolean"
+          },
+          "tekst": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Represents the data required to add a beoordeling to a verspakket."
+      },
+      "AddBeoordelingResponse": {
+        "required": [
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "Allergeen": {
+        "type": "integer"
+      },
+      "BackgroundCommandStatus": {
+        "type": "integer"
+      },
+      "BackgroundCommandType": {
+        "type": "integer"
+      },
+      "Beoordeling": {
+        "required": [
+          "cijferSmaak",
+          "cijferBereiden",
+          "aanbevolen"
+        ],
+        "type": "object",
+        "properties": {
+          "cijferSmaak": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cijferBereiden": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "aanbevolen": {
+            "type": "boolean"
+          },
+          "tekst": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "CreateSupermarktResponse": {
+        "required": [
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "CreateVerspakketRequest": {
+        "required": [
+          "naam",
+          "prijsInCenten",
+          "aantalPersonen",
+          "supermarktId"
+        ],
+        "type": "object",
+        "properties": {
+          "naam": {
+            "type": "string"
+          },
+          "prijsInCenten": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "aantalPersonen": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "supermarktId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "beoordeling": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AddBeoordelingRequest"
+              }
+            ]
+          },
+          "fotos": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/VerspakketFotoRequest"
+            }
+          },
+          "ingredienten": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/IngredientRequest"
+            }
+          },
+          "voedingswaarden": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/VoedingswaardeRequest"
+            }
+          },
+          "allergenen": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Allergeen"
+            }
+          }
+        },
+        "description": "Represents the data required to create a verspakket."
+      },
+      "CreateVerspakketResponse": {
+        "required": [
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "Eenheid": {
+        "type": "integer"
+      },
+      "EnqueueImportVerspakketResponse": {
+        "required": [
+          "id",
+          "status",
+          "attemptCount",
+          "existing"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/BackgroundCommandStatus"
+          },
+          "attemptCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextAttemptAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "existing": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GetBackgroundCommandResponse": {
+        "required": [
+          "id",
+          "type",
+          "status",
+          "attemptCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "$ref": "#/components/schemas/BackgroundCommandType"
+          },
+          "status": {
+            "$ref": "#/components/schemas/BackgroundCommandStatus"
+          },
+          "attemptCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextAttemptAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "startedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "resultVerspakketId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "lastError": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "GetSupermarktenResponse": {
+        "required": [
+          "supermarkten"
+        ],
+        "type": "object",
+        "properties": {
+          "supermarkten": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Supermarkt"
+            }
+          }
+        }
+      },
+      "GetVerspakketResponse": {
+        "required": [
+          "verspakket"
+        ],
+        "type": "object",
+        "properties": {
+          "verspakket": {
+            "$ref": "#/components/schemas/Verspakket"
+          }
+        }
+      },
+      "GetVerspakkettenResponse": {
+        "required": [
+          "verspakketten"
+        ],
+        "type": "object",
+        "properties": {
+          "verspakketten": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VerspakketSummary"
+            }
+          }
+        }
+      },
+      "ImportVerspakketRequest": {
+        "required": [
+          "url"
+        ],
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        },
+        "description": "Represents a request to import a verspakket from a retailer product page."
+      },
+      "Ingredient": {
+        "required": [
+          "naam",
+          "hoeveelheid",
+          "eenheid",
+          "inbegrepen"
+        ],
+        "type": "object",
+        "properties": {
+          "naam": {
+            "type": "string"
+          },
+          "hoeveelheid": {
+            "type": "number",
+            "format": "double"
+          },
+          "eenheid": {
+            "$ref": "#/components/schemas/Eenheid"
+          },
+          "inbegrepen": {
+            "type": "boolean"
+          }
+        }
+      },
+      "IngredientRequest": {
+        "required": [
+          "naam",
+          "hoeveelheid",
+          "eenheid",
+          "inbegrepen"
+        ],
+        "type": "object",
+        "properties": {
+          "naam": {
+            "type": "string"
+          },
+          "hoeveelheid": {
+            "type": "number",
+            "format": "double"
+          },
+          "eenheid": {
+            "$ref": "#/components/schemas/Eenheid"
+          },
+          "inbegrepen": {
+            "type": "boolean"
+          }
+        },
+        "description": "Represents an ingredient in a request."
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "SortDirection": {
+        "type": "integer"
+      },
+      "Supermarkt": {
+        "required": [
+          "id",
+          "naam"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "naam": {
+            "type": "string"
+          }
+        }
+      },
+      "SupermarktRequest": {
+        "required": [
+          "naam"
+        ],
+        "type": "object",
+        "properties": {
+          "naam": {
+            "type": "string"
+          }
+        },
+        "description": "Represents the data required to create or update a supermarkt."
+      },
+      "UpdateVerspakketRequest": {
+        "required": [
+          "naam",
+          "prijsInCenten",
+          "aantalPersonen",
+          "supermarktId"
+        ],
+        "type": "object",
+        "properties": {
+          "naam": {
+            "type": "string"
+          },
+          "prijsInCenten": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "aantalPersonen": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "supermarktId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fotos": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/VerspakketFotoRequest"
+            }
+          },
+          "ingredienten": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/IngredientRequest"
+            }
+          },
+          "voedingswaarden": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/VoedingswaardeRequest"
+            }
+          },
+          "allergenen": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Allergeen"
+            }
+          }
+        },
+        "description": "Represents the data required to update a verspakket."
+      },
+      "Verspakket": {
+        "required": [
+          "id",
+          "naam"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "naam": {
+            "type": "string"
+          },
+          "prijsInCenten": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "aantalPersonen": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "averageCijferSmaak": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "averageCijferBereiden": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "beoordelingen": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Beoordeling"
+            }
+          },
+          "fotos": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/VerspakketFotoResponse"
+            }
+          },
+          "ingredienten": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Ingredient"
+            }
+          },
+          "voedingswaarden": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Voedingswaarde"
+            }
+          },
+          "allergenen": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Allergeen"
+            }
+          },
+          "supermarkt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Supermarkt"
+              }
+            ]
+          }
+        }
+      },
+      "VerspakketFotoRequest": {
+        "required": [
+          "base64Data",
+          "isMainImage"
+        ],
+        "type": "object",
+        "properties": {
+          "base64Data": {
+            "type": "string"
+          },
+          "isMainImage": {
+            "type": "boolean"
+          }
+        },
+        "description": "Represents a foto in a request, encoded as base64."
+      },
+      "VerspakketFotoResponse": {
+        "required": [
+          "id",
+          "base64Data",
+          "isMainImage"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "base64Data": {
+            "type": "string"
+          },
+          "isMainImage": {
+            "type": "boolean"
+          }
+        }
+      },
+      "VerspakketSortField": {
+        "type": "integer"
+      },
+      "VerspakketSummary": {
+        "required": [
+          "id",
+          "naam"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "naam": {
+            "type": "string"
+          },
+          "prijsInCenten": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "aantalPersonen": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "averageCijferSmaak": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "averageCijferBereiden": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "foto": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/VerspakketFotoResponse"
+              }
+            ]
+          },
+          "supermarkt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Supermarkt"
+              }
+            ]
+          }
+        }
+      },
+      "Voedingswaarde": {
+        "type": "object",
+        "properties": {
+          "basis": {
+            "$ref": "#/components/schemas/VoedingswaardeBasis"
+          },
+          "energieKj": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "energieKcal": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "vetten": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "waarvanVerzadigd": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "koolhydraten": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "waarvanSuikers": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "vezels": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "eiwitten": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "zout": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "VoedingswaardeBasis": {
+        "type": "integer"
+      },
+      "VoedingswaardeRequest": {
+        "required": [
+          "basis",
+          "energieKj",
+          "energieKcal",
+          "vetten",
+          "waarvanVerzadigd",
+          "koolhydraten",
+          "waarvanSuikers",
+          "vezels",
+          "eiwitten",
+          "zout"
+        ],
+        "type": "object",
+        "properties": {
+          "basis": {
+            "$ref": "#/components/schemas/VoedingswaardeBasis"
+          },
+          "energieKj": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "energieKcal": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "vetten": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "waarvanVerzadigd": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "koolhydraten": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "waarvanSuikers": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "vezels": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "eiwitten": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "zout": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        },
+        "description": "Represents the nutritional values of a verspakket. Weight values are in grams,\r\nenergy in kJ and kcal. The basis indicates whether the values are per 100 gram or per portie."
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "BackgroundCommands"
+    },
+    {
+      "name": "Health"
+    },
+    {
+      "name": "Supermarkten"
+    },
+    {
+      "name": "Verspakketten"
+    }
+  ]
+}
