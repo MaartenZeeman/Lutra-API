@@ -268,7 +268,7 @@ Path parameters:
     "averageCijferSmaak": 9.0,
     "averageCijferBereiden": 8.0,
     "beoordelingen": [
-      { "cijferSmaak": 9, "cijferBereiden": 8, "aanbevolen": true, "tekst": "Heerlijk!" }
+      { "id": "71f3a9d2-8c4e-4b1a-9d3f-1234567890ab", "cijferSmaak": 9, "cijferBereiden": 8, "aanbevolen": true, "tekst": "Heerlijk!" }
     ],
     "fotos": [
       { "id": "c3f4a1b2-...", "base64Data": "iVBORw0KGgoAAAANSUhEUg...", "isMainImage": true }
@@ -287,6 +287,10 @@ Path parameters:
 ```
 
 `200 OK` on success; `404 Not Found` when the verspakket does not (or no longer) exist.
+
+> Each entry in `beoordelingen` includes its `id`. Use that identifier with
+> `PUT /api/verspakketten/{id}/beoordelingen/{beoordelingId}` and
+> `DELETE /api/verspakketten/{id}/beoordelingen/{beoordelingId}`.
 
 ### `POST /api/verspakketten`
 
@@ -693,9 +697,14 @@ Used as a child of verspakket responses and as items in `GET /api/supermarkten`.
 
 ### Beoordeling
 
+Returned inside `GET /api/verspakketten/{id}` with its identifier:
+
 ```json
-{ "cijferSmaak": 9, "cijferBereiden": 8, "aanbevolen": true, "tekst": "Heerlijk!" }
+{ "id": "71f3a9d2-...", "cijferSmaak": 9, "cijferBereiden": 8, "aanbevolen": true, "tekst": "Heerlijk!" }
 ```
+
+The `id` is required when updating or removing a single beoordeling; the create/update request body
+(`AddBeoordelingRequest`) carries only the values.
 
 ### VerspakketFoto
 

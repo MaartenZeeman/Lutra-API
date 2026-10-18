@@ -20,6 +20,11 @@ public static class OpenApiExtensions
         services.AddOpenApi(DocumentName, options =>
         {
             options.CreateSchemaReferenceId = CreateSchemaReferenceId;
+            options.AddDocumentTransformer((document, _, _) =>
+            {
+                OpenApiLineEndingNormalizer.Normalize(document);
+                return Task.CompletedTask;
+            });
         });
 
         return services;

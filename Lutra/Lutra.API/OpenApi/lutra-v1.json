@@ -518,7 +518,7 @@
         "tags": [
           "Verspakketten"
         ],
-        "summary": "Removes an existing verspakket together with its beoordelingen, fotos, ingredienten,\r\nvoedingswaarden and allergenen.",
+        "summary": "Removes an existing verspakket together with its beoordelingen, fotos, ingredienten,\nvoedingswaarden and allergenen.",
         "parameters": [
           {
             "name": "id",
@@ -556,7 +556,7 @@
         "tags": [
           "Verspakketten"
         ],
-        "summary": "Queues a verspakket import from a retailer product page. The import runs in the background\r\nand can be monitored through the background command status endpoint.",
+        "summary": "Queues a verspakket import from a retailer product page. The import runs in the background\nand can be monitored through the background command status endpoint.",
         "requestBody": {
           "description": "Cancellation token for the request.",
           "content": {
@@ -865,12 +865,17 @@
       },
       "Beoordeling": {
         "required": [
+          "id",
           "cijferSmaak",
           "cijferBereiden",
           "aanbevolen"
         ],
         "type": "object",
         "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
           "cijferSmaak": {
             "type": "integer",
             "format": "int32"
@@ -1666,7 +1671,7 @@
             "format": "double"
           }
         },
-        "description": "Represents the nutritional values of a verspakket. Weight values are in grams,\r\nenergy in kJ and kcal. The basis indicates whether the values are per 100 gram or per portie."
+        "description": "Represents the nutritional values of a verspakket. Weight values are in grams,\nenergy in kJ and kcal. The basis indicates whether the values are per 100 gram or per portie."
       }
     }
   },

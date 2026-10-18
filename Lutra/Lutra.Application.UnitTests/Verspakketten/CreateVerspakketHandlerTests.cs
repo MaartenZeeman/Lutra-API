@@ -146,6 +146,7 @@ public class CreateVerspakketHandlerTests
             supermarktId,
             new Beoordeling
             {
+                Id = Guid.Empty,
                 CijferSmaak = 8,
                 CijferBereiden = 7,
                 Aanbevolen = true,

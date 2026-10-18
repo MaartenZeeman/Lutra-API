@@ -26,6 +26,7 @@ namespace Lutra.Application.Verspakketten;
                                     Beoordelingen = v.Beoordelingen
                                         .Select(b => new Beoordeling
                                         {
+                                            Id = b.Id,
                                             CijferSmaak = b.CijferSmaak,
                                             CijferBereiden = b.CijferBereiden,
                                             Aanbevolen = b.Aanbevolen,

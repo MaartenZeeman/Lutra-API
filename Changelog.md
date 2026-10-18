@@ -4,8 +4,10 @@
 
 - Added removal endpoints that soft-delete content: `DELETE /api/supermarkten/{id}` (returns `409 Conflict` while the supermarket still has verspakketten), `DELETE /api/verspakketten/{id}` (also soft-deletes the beoordelingen, fotos, ingredienten, voedingswaarden and allergenen and clears `bronUrl` so the source URL can be imported again), and `DELETE /api/verspakketten/{id}/beoordelingen/{beoordelingId}`. All three return `204 No Content`, `404 Not Found` for an unknown or already removed identifier.
 - Added `PUT /api/verspakketten/{id}/beoordelingen/{beoordelingId}` to update a beoordeling, reusing the `AddBeoordelingRequest` body and the same `[Range]`/`[MaxLength]` bounds; updating a supermarkt already existed as `PUT /api/supermarkten/{id}`.
+- `GET /api/verspakketten/{id}` now returns an `id` for every entry in `beoordelingen`, so a client can target the new `PUT`/`DELETE .../beoordelingen/{beoordelingId}` endpoints; `docs/api.md` documents the field and an integration test asserts it matches the stored identifier.
 - The migrator seeder now restores a previously removed seeded supermarkt (`IgnoreQueryFilters`) instead of inserting a duplicate row on its next run.
 - Updated `docs/api.md` (endpoint overview, per-resource sections, status-code notes), extended the OpenAPI contract assertions, and added Application unit tests and API integration tests for the new endpoints.
+- Fixed the generated OpenAPI contract to be identical on every platform. XML documentation comments are copied into the contract verbatim with the source file's line endings, so a Windows checkout (CRLF) produced a different `lutra-v1.json` than the Linux CI runner (LF) and the committed contract failed the CI freshness check; a document transformer now normalizes the contract to LF, and the committed `Lutra.API/OpenApi/lutra-v1.json` was regenerated.
 
 ## 18 September 2026
 

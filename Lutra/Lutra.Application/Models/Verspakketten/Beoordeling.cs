@@ -2,6 +2,8 @@
 
 public record Beoordeling
 {
+    public required Guid Id { get; init; }
+
     public required int CijferSmaak { get; init; }
 
     public required int CijferBereiden { get; init; }

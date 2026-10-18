@@ -236,6 +236,8 @@ public class VerspakkettenController(IMediator mediator) : ControllerBase
             ? null
             : new Beoordeling
             {
+                // The create handler assigns the identifier; the request only carries values.
+                Id = Guid.Empty,
                 CijferSmaak = request.CijferSmaak,
                 CijferBereiden = request.CijferBereiden,
                 Aanbevolen = request.Aanbevolen,

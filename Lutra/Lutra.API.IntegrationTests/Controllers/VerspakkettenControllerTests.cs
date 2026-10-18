@@ -142,6 +142,7 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
             supermarkt.Id,
             new Lutra.Application.Models.Verspakketten.Beoordeling
             {
+                Id = Guid.Empty,
                 CijferSmaak = 9,
                 CijferBereiden = 8,
                 Aanbevolen = true,
@@ -819,7 +820,8 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
 
         var detail = await Client.GetFromJsonAsync<GetVerspakket.Response>($"/api/verspakketten/{verspakket.Id}", TestContext.Current.CancellationToken);
         detail!.Verspakket.Beoordelingen.Should().ContainSingle();
-        detail.Verspakket.Beoordelingen!.Single().CijferSmaak.Should().Be(9);
+        detail.Verspakket.Beoordelingen!.Single().Id.Should().Be(beoordeling.Id);
+        detail.Verspakket.Beoordelingen.Single().CijferSmaak.Should().Be(9);
         detail.Verspakket.Beoordelingen.Single().CijferBereiden.Should().Be(8);
         detail.Verspakket.Beoordelingen.Single().Aanbevolen.Should().BeTrue();
         detail.Verspakket.Beoordelingen.Single().Tekst.Should().Be("Beter");
@@ -933,13 +935,13 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
 
         using var scope = Factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<Lutra.Application.Interfaces.ILutraDbContext>();
-        var stored = await db.Verspaketten.IgnoreQueryFilters().AsNoTracking().SingleAsync(v => v.Id == verspakket.Id);
+        var stored = await db.Verspaketten.IgnoreQueryFilters().AsNoTracking().SingleAsync(v => v.Id == verspakket.Id, TestContext.Current.CancellationToken);
 
         stored.DeletedAt.Should().NotBeNull();
         stored.BronUrl.Should().BeNull("the unique BronUrl index is not filtered on deletion");
-        (await db.Beoordelingen.IgnoreQueryFilters().CountAsync(b => b.VerspakketId == verspakket.Id && b.DeletedAt != null))
+        (await db.Beoordelingen.IgnoreQueryFilters().CountAsync(b => b.VerspakketId == verspakket.Id && b.DeletedAt != null, TestContext.Current.CancellationToken))
             .Should().Be(1);
-        (await db.Ingredienten.IgnoreQueryFilters().CountAsync(i => i.VerspakketId == verspakket.Id && i.DeletedAt != null))
+        (await db.Ingredienten.IgnoreQueryFilters().CountAsync(i => i.VerspakketId == verspakket.Id && i.DeletedAt != null, TestContext.Current.CancellationToken))
             .Should().Be(1);
     }
 
