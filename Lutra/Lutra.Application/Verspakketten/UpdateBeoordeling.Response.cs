@@ -1,0 +1,6 @@
+namespace Lutra.Application.Verspakketten;
+
+public sealed partial class UpdateBeoordeling
+{
+    public sealed record Response;
+}

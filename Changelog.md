@@ -1,5 +1,12 @@
 # Changelog
 
+## 18 October 2026
+
+- Added removal endpoints that soft-delete content: `DELETE /api/supermarkten/{id}` (returns `409 Conflict` while the supermarket still has verspakketten), `DELETE /api/verspakketten/{id}` (also soft-deletes the beoordelingen, fotos, ingredienten, voedingswaarden and allergenen and clears `bronUrl` so the source URL can be imported again), and `DELETE /api/verspakketten/{id}/beoordelingen/{beoordelingId}`. All three return `204 No Content`, `404 Not Found` for an unknown or already removed identifier.
+- Added `PUT /api/verspakketten/{id}/beoordelingen/{beoordelingId}` to update a beoordeling, reusing the `AddBeoordelingRequest` body and the same `[Range]`/`[MaxLength]` bounds; updating a supermarkt already existed as `PUT /api/supermarkten/{id}`.
+- The migrator seeder now restores a previously removed seeded supermarkt (`IgnoreQueryFilters`) instead of inserting a duplicate row on its next run.
+- Updated `docs/api.md` (endpoint overview, per-resource sections, status-code notes), extended the OpenAPI contract assertions, and added Application unit tests and API integration tests for the new endpoints.
+
 ## 18 September 2026
 
 - Added `docs/api.md`, a complete HTTP API reference covering every endpoint with curl examples and request/response JSON, the enum tables (allergenen, eenheden, voedingswaardebasissen, sort fields, background-command status), data models, limits, validation rules, and the status-code/error mapping. `README.md` now links to it as the API reference.

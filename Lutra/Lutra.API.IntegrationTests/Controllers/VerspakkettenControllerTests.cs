@@ -5,6 +5,8 @@ using Lutra.API.IntegrationTests.Infrastructure;
 using Lutra.API.Requests;
 using Lutra.Application.Verspakketten;
 using Lutra.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Lutra.API.IntegrationTests.Controllers;
 
@@ -798,6 +800,147 @@ public class VerspakkettenControllerTests(LutraApiFactory factory)
         created.Verspakket.Voedingswaarden!.Single().Basis.Should().Be(VoedingswaardeBasis.PerPortie);
         created.Verspakket.Voedingswaarden.Single().EnergieKj.Should().Be(2723);
         created.Verspakket.Allergenen.Should().BeEquivalentTo(new[] { Allergeen.Melk });
+    }
+
+    // ── PUT /api/verspakketten/{id}/beoordelingen/{beoordelingId} ─────────────
+
+    [Fact]
+    public async Task UpdateBeoordeling_ReturnsNoContent_AndPersistsChanges()
+    {
+        var supermarktId = await SeedSupermarktAsync();
+        var verspakket = await SeedVerspakketAsync(supermarktId, "Beoordeeld", beoordelingen: [(6, 6)]);
+        var beoordeling = verspakket.Beoordelingen.Single();
+
+        var request = new AddBeoordelingRequest(9, 8, true, "Beter");
+        var response = await Client.PutAsJsonAsync(
+            $"/api/verspakketten/{verspakket.Id}/beoordelingen/{beoordeling.Id}", request, TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var detail = await Client.GetFromJsonAsync<GetVerspakket.Response>($"/api/verspakketten/{verspakket.Id}", TestContext.Current.CancellationToken);
+        detail!.Verspakket.Beoordelingen.Should().ContainSingle();
+        detail.Verspakket.Beoordelingen!.Single().CijferSmaak.Should().Be(9);
+        detail.Verspakket.Beoordelingen.Single().CijferBereiden.Should().Be(8);
+        detail.Verspakket.Beoordelingen.Single().Aanbevolen.Should().BeTrue();
+        detail.Verspakket.Beoordelingen.Single().Tekst.Should().Be("Beter");
+    }
+
+    [Fact]
+    public async Task UpdateBeoordeling_ReturnsBadRequest_WhenCijferOutOfRange()
+    {
+        var supermarktId = await SeedSupermarktAsync();
+        var verspakket = await SeedVerspakketAsync(supermarktId, "Beoordeeld", beoordelingen: [(6, 6)]);
+        var beoordeling = verspakket.Beoordelingen.Single();
+
+        var request = new AddBeoordelingRequest(11, 8, true, null);
+        var response = await Client.PutAsJsonAsync(
+            $"/api/verspakketten/{verspakket.Id}/beoordelingen/{beoordeling.Id}", request, TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task UpdateBeoordeling_ReturnsNotFound_WhenBeoordelingDoesNotBelongToVerspakket()
+    {
+        var supermarktId = await SeedSupermarktAsync();
+        var verspakket = await SeedVerspakketAsync(supermarktId, "Beoordeeld", beoordelingen: [(6, 6)]);
+
+        var request = new AddBeoordelingRequest(9, 8, true, "Beter");
+        var response = await Client.PutAsJsonAsync(
+            $"/api/verspakketten/{verspakket.Id}/beoordelingen/{Guid.NewGuid()}", request, TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    // ── DELETE /api/verspakketten/{id}/beoordelingen/{beoordelingId} ──────────
+
+    [Fact]
+    public async Task DeleteBeoordeling_ReturnsNoContent_AndRemovesIt()
+    {
+        var supermarktId = await SeedSupermarktAsync();
+        var verspakket = await SeedVerspakketAsync(supermarktId, "Beoordeeld", beoordelingen: [(6, 6), (9, 9)]);
+        var beoordeling = verspakket.Beoordelingen.First();
+
+        var response = await Client.DeleteAsync(
+            $"/api/verspakketten/{verspakket.Id}/beoordelingen/{beoordeling.Id}", TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var detail = await Client.GetFromJsonAsync<GetVerspakket.Response>($"/api/verspakketten/{verspakket.Id}", TestContext.Current.CancellationToken);
+        detail!.Verspakket.Beoordelingen.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task DeleteBeoordeling_ReturnsNotFound_WhenBeoordelingDoesNotBelongToVerspakket()
+    {
+        var supermarktId = await SeedSupermarktAsync();
+        var verspakket = await SeedVerspakketAsync(supermarktId, "Beoordeeld", beoordelingen: [(6, 6)]);
+
+        var response = await Client.DeleteAsync(
+            $"/api/verspakketten/{verspakket.Id}/beoordelingen/{Guid.NewGuid()}", TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    // ── DELETE /api/verspakketten/{id} ────────────────────────────────────────
+
+    [Fact]
+    public async Task Delete_ReturnsNoContent_AndHidesVerspakket()
+    {
+        var supermarktId = await SeedSupermarktAsync();
+        var verspakket = await SeedVerspakketAsync(supermarktId, "Weg ermee");
+
+        var response = await Client.DeleteAsync($"/api/verspakketten/{verspakket.Id}", TestContext.Current.CancellationToken);
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var get = await Client.GetAsync($"/api/verspakketten/{verspakket.Id}", TestContext.Current.CancellationToken);
+        get.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Delete_ReturnsNotFound_WhenVerspakketDoesNotExist()
+    {
+        var response = await Client.DeleteAsync($"/api/verspakketten/{Guid.NewGuid()}", TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Delete_RemovesBeoordelingenAndChildren()
+    {
+        var supermarktId = await SeedSupermarktAsync();
+        var verspakket = new Verspakket
+        {
+            Id = Guid.NewGuid(), Naam = "Met kinderen", AantalPersonen = 2,
+            SupermarktId = supermarktId, BronUrl = "https://www.ah.nl/product/4242",
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        };
+        verspakket.AddBeoordeling(new Beoordeling
+        {
+            Id = Guid.NewGuid(), CijferSmaak = 9, CijferBereiden = 8, Aanbevolen = true,
+            VerspakketId = verspakket.Id, CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        });
+        verspakket.AddIngredient(new Lutra.Domain.Entities.Ingredient
+        {
+            Id = Guid.NewGuid(), Naam = "Tomaten", Hoeveelheid = 400,
+            Eenheid = Lutra.Domain.Entities.Eenheid.Gram, Inbegrepen = true,
+            VerspakketId = verspakket.Id, CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        });
+        await SeedAsync(verspakket);
+
+        var response = await Client.DeleteAsync($"/api/verspakketten/{verspakket.Id}", TestContext.Current.CancellationToken);
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using var scope = Factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<Lutra.Application.Interfaces.ILutraDbContext>();
+        var stored = await db.Verspaketten.IgnoreQueryFilters().AsNoTracking().SingleAsync(v => v.Id == verspakket.Id);
+
+        stored.DeletedAt.Should().NotBeNull();
+        stored.BronUrl.Should().BeNull("the unique BronUrl index is not filtered on deletion");
+        (await db.Beoordelingen.IgnoreQueryFilters().CountAsync(b => b.VerspakketId == verspakket.Id && b.DeletedAt != null))
+            .Should().Be(1);
+        (await db.Ingredienten.IgnoreQueryFilters().CountAsync(i => i.VerspakketId == verspakket.Id && i.DeletedAt != null))
+            .Should().Be(1);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

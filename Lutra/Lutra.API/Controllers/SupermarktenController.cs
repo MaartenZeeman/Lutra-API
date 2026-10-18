@@ -65,4 +65,26 @@ public class SupermarktenController(IMediator mediator) : ControllerBase
 
         return NoContent();
     }
+
+    /// <summary>
+    /// Removes an existing supermarkt.
+    /// </summary>
+    /// <param name="id">The supermarkt identifier.</param>
+    /// <param name="cancellationToken">Cancellation token for the request.</param>
+    /// <returns>
+    /// Returns 204 No Content when the removal succeeds.
+    /// Returns 404 Not Found when the specified supermarkt does not exist.
+    /// Returns 409 Conflict when the supermarkt still has verspakketten.
+    /// </returns>
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken = default)
+    {
+        await mediator.SendCommandAsync<DeleteSupermarkt.Command, DeleteSupermarkt.Response>(
+            new DeleteSupermarkt.Command(id), cancellationToken);
+
+        return NoContent();
+    }
 }

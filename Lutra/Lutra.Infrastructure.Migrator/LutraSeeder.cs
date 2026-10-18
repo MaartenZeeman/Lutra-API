@@ -32,9 +32,20 @@ public static class LutraSeeder
 
     private static Supermarkt EnsureSupermarkt(LutraDbContext dbContext, string naam, DateTime now)
     {
-        var supermarkt = dbContext.Supermarkten.FirstOrDefault(s => s.Naam == naam);
+        // Ignore the soft-delete filter so a removed seeded supermarkt is restored instead of
+        // being duplicated by the next migrator run.
+        var supermarkt = dbContext.Supermarkten
+            .IgnoreQueryFilters()
+            .FirstOrDefault(s => s.Naam == naam);
+
         if (supermarkt is not null)
         {
+            if (supermarkt.DeletedAt is not null)
+            {
+                supermarkt.DeletedAt = null;
+                supermarkt.ModifiedAt = now;
+            }
+
             return supermarkt;
         }
 

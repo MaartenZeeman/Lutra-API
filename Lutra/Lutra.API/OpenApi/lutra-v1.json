@@ -221,6 +221,52 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "Supermarkten"
+        ],
+        "summary": "Removes an existing supermarkt.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The supermarkt identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": { }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/verspakketten": {
@@ -467,6 +513,42 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "Verspakketten"
+        ],
+        "summary": "Removes an existing verspakket together with its beoordelingen, fotos, ingredienten,\r\nvoedingswaarden and allergenen.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The verspakket identifier.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": { }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/verspakketten/import": {
@@ -588,6 +670,131 @@
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/verspakketten/{id}/beoordelingen/{beoordelingId}": {
+      "put": {
+        "tags": [
+          "Verspakketten"
+        ],
+        "summary": "Updates an existing beoordeling of a verspakket.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The verspakket ID.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "beoordelingId",
+            "in": "path",
+            "description": "The beoordeling ID.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Cancellation token for the request.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddBeoordelingRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddBeoordelingRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddBeoordelingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": { }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Verspakketten"
+        ],
+        "summary": "Removes a beoordeling from an existing verspakket.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The verspakket ID.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "beoordelingId",
+            "in": "path",
+            "description": "The beoordeling ID.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "content": {
+              "application/json": { }
             }
           },
           "404": {

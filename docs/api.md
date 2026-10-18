@@ -6,8 +6,9 @@ request and response contract, the enums, validation rules, limits and error han
 - Base URL: `http://localhost:8080` (Docker default) or wherever the API is deployed.
 - All request and response bodies are `application/json` unless stated otherwise. DateTime values
   are ISO 8601 UTC (for example `2026-09-18T09:12:33.5234567Z`).
-- There is currently **no authentication**. Content can be soft-deleted in the database, and the API
-  only returns records that are not deleted.
+- There is currently **no authentication**. Removing content soft-deletes it (a deletion timestamp is
+  stored in the database); the API only returns records that are not deleted, so a removed resource
+  disappears from `GET` responses and its identifier is no longer usable.
 - Identifiers are GUIDs (UUIDs).
 - Enum values in JSON **bodies and responses are serialized as integers** (no string-enum converter is
   configured). Enum **query-string** parameters accept both the name and the number.
@@ -24,12 +25,16 @@ request and response contract, the enums, validation rules, limits and error han
 | GET    | `/api/supermarkten`                      | List supermarkets                                    |
 | POST   | `/api/supermarkten`                      | Create a supermarket                                 |
 | PUT    | `/api/supermarkten/{id}`                 | Update a supermarket                                 |
+| DELETE | `/api/supermarkten/{id}`                 | Remove a supermarket                                 |
 | GET    | `/api/verspakketten`                     | List verspakketten (pageable, sortable)              |
 | GET    | `/api/verspakketten/{id}`                | Get one verspakket with all details                  |
 | POST   | `/api/verspakketten`                    | Create a verspakket                                  |
 | PUT    | `/api/verspakketten/{id}`                | Update a verspakket                                  |
+| DELETE | `/api/verspakketten/{id}`                | Remove a verspakket and all of its child data        |
 | POST   | `/api/verspakketten/import`              | Queue an import from a retailer product page          |
 | POST   | `/api/verspakketten/{id}/beoordelingen`  | Add a beoordeling (rating) to a verspakket            |
+| PUT    | `/api/verspakketten/{id}/beoordelingen/{beoordelingId}` | Update a beoordeling of a verspakket |
+| DELETE | `/api/verspakketten/{id}/beoordelingen/{beoordelingId}` | Remove a beoordeling from a verspakket |
 | GET   | `/api/background-commands/{id}`         | Status of a queued background job                     |
 
 > The endpoints use a REST design. "Verspakket" is a Dutch term for a meal kit / ready-made dish
@@ -167,6 +172,25 @@ Request body: same `SupermarktRequest` as create.
 - `204 No Content` on success (empty body).
 - `400 Bad Request` when `naam` is invalid.
 - `404 Not Found` when no supermarket with that `id` exists.
+
+### `DELETE /api/supermarkten/{id}`
+
+Removes a supermarket (soft delete).
+
+Path parameters:
+
+| Parameter | Type | Description                |
+|-----------|------|----------------------------|
+| `id`      | GUID | The supermarket identifier |
+
+```bash
+curl -X DELETE http://localhost:8080/api/supermarkten/9b1c4d7a-59d8-4e6a-8f0c-1234567890ab
+```
+
+- `204 No Content` on success (empty body).
+- `404 Not Found` when no supermarket with that `id` exists (or it was already removed).
+- `409 Conflict` when the supermarket still has verspakketten; remove those first. A removed
+  supermarket is restored (not duplicated) by the migrator's next seed run.
 
 ---
 
@@ -349,6 +373,28 @@ Field semantics:
 `204 No Content` on success (empty body). `400 Bad Request` on validation failure. `404 Not Found`
 when the verspakket or the `supermarktId` does not exist.
 
+### `DELETE /api/verspakketten/{id}`
+
+Removes a verspakket (soft delete) together with its beoordelingen, fotos, ingredienten,
+voedingswaarden and allergenen.
+
+Path parameters:
+
+| Parameter | Type | Description                |
+|-----------|------|----------------------------|
+| `id`      | GUID | The verspakket identifier  |
+
+```bash
+curl -X DELETE http://localhost:8080/api/verspakketten/a6d2c4e8-4f1b-4c3d-9a2e-1234567890ab
+```
+
+- `204 No Content` on success (empty body).
+- `404 Not Found` when the verspakket does not exist (or was already removed).
+
+> A removed verspakket keeps its identifier but is hidden from every endpoint. Because the unique
+> index on `bronUrl` is not filtered on deletion, a removal clears `bronUrl` so the same normalized
+> product URL can be imported again.
+
 ### `POST /api/verspakketten/{id}/beoordelingen`
 
 Adds one beoordeling (rating) to a verspakket.
@@ -380,6 +426,50 @@ Fields:
 ```
 
 `404 Not Found` when the verspakket does not exist.
+
+### `PUT /api/verspakketten/{id}/beoordelingen/{beoordelingId}`
+
+Updates an existing beoordeling of a verspakket.
+
+Path parameters:
+
+| Parameter       | Type | Description               |
+|-----------------|------|---------------------------|
+| `id`            | GUID | The verspakket identifier |
+| `beoordelingId` | GUID | The beoordeling identifier |
+
+Request body: same `AddBeoordelingRequest` as the add endpoint.
+
+```json
+{
+  "cijferSmaak": 8,
+  "cijferBereiden": 9,
+  "aanbevolen": false,
+  "tekst": "Toch minder dan verwacht."
+}
+```
+
+- `204 No Content` on success (empty body).
+- `400 Bad Request` when `cijferSmaak`/`cijferBereiden` are outside `[1, 10]` or `tekst` exceeds 1024 characters.
+- `404 Not Found` when the beoordeling does not exist or does not belong to that verspakket.
+
+### `DELETE /api/verspakketten/{id}/beoordelingen/{beoordelingId}`
+
+Removes a single beoordeling from a verspakket (soft delete).
+
+Path parameters:
+
+| Parameter       | Type | Description               |
+|-----------------|------|---------------------------|
+| `id`            | GUID | The verspakket identifier |
+| `beoordelingId` | GUID | The beoordeling identifier |
+
+```bash
+curl -X DELETE http://localhost:8080/api/verspakketten/a6d2c4e8-4f1b-4c3d-9a2e-1234567890ab/beoordelingen/71f3a9d2-8c4e-4b1a-9d3f-1234567890ab
+```
+
+- `204 No Content` on success (empty body).
+- `404 Not Found` when the beoordeling does not exist or does not belong to that verspakket.
 
 ### `POST /api/verspakketten/import`
 
@@ -714,10 +804,10 @@ with content type `application/problem+json`:
 | 200    | OK — successful `GET`                                                    |
 | 201    | Created — successful create; `Location` header points at the resource    |
 | 202    | Accepted — import job queued                                             |
-| 204    | No Content — successful update                                           |
+| 204    | No Content — successful update or removal                                |
 | 400    | Bad Request — validation and model-binding failures (`ValidationException`) |
 | 404    | Not Found — unknown/id reference (`NotFoundException`)                    |
-| 409    | Conflict — e.g. import matching multiple legacy verspakketten (`ConflictException`) |
+| 409    | Conflict — e.g. removing a supermarket that still has verspakketten, or an import matching multiple legacy verspakketten (`ConflictException`) |
 | 413    | Payload Too Large — request body over 32 MiB (Kestrel)                    |
 | 422    | Unprocessable Entity — extracted product data unusable (`UnprocessableException`) |
 | 429    | Too Many Requests — queue full or per-IP import rate limit (`TooManyRequestsException`; the rate-limit response has an empty body) |

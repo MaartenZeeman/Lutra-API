@@ -243,4 +243,71 @@ public class SupermarktenControllerTests(LutraApiFactory factory)
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
+
+    // ── DELETE /api/supermarkten/{id} ─────────────────────────────────────────
+
+    [Fact]
+    public async Task Delete_ReturnsNoContent_AndRemovesSupermarkt()
+    {
+        var supermarkt = await SeedAsync(new Supermarkt
+        {
+            Id = Guid.NewGuid(), Naam = "Weg ermee",
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        });
+
+        var response = await Client.DeleteAsync($"/api/supermarkten/{supermarkt.Id}", TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        var body = await Client.GetFromJsonAsync<GetSupermarkten.Response>("/api/supermarkten", TestContext.Current.CancellationToken);
+        body!.Supermarkten.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Delete_ReturnsNotFound_WhenSupermarktDoesNotExist()
+    {
+        var response = await Client.DeleteAsync($"/api/supermarkten/{Guid.NewGuid()}", TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Delete_ReturnsConflict_WhenSupermarktStillHasVerspakketten()
+    {
+        var supermarkt = await SeedAsync(new Supermarkt
+        {
+            Id = Guid.NewGuid(), Naam = "Met pakket",
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        });
+        await SeedAsync(new Verspakket
+        {
+            Id = Guid.NewGuid(), Naam = "Pakket", AantalPersonen = 2,
+            SupermarktId = supermarkt.Id,
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        });
+
+        var response = await Client.DeleteAsync($"/api/supermarkten/{supermarkt.Id}", TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task Delete_ReturnsNoContent_WhenOnlySoftDeletedVerspakkettenRemain()
+    {
+        var supermarkt = await SeedAsync(new Supermarkt
+        {
+            Id = Guid.NewGuid(), Naam = "Alleen verwijderde pakketten",
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow
+        });
+        await SeedAsync(new Verspakket
+        {
+            Id = Guid.NewGuid(), Naam = "Verwijderd pakket", AantalPersonen = 2,
+            SupermarktId = supermarkt.Id,
+            CreatedAt = DateTime.UtcNow, ModifiedAt = DateTime.UtcNow, DeletedAt = DateTime.UtcNow
+        });
+
+        var response = await Client.DeleteAsync($"/api/supermarkten/{supermarkt.Id}", TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+    }
 }

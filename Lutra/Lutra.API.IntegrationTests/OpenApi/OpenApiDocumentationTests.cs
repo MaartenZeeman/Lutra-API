@@ -22,6 +22,7 @@ public class OpenApiDocumentationTests(LutraApiFactory factory) : IntegrationTes
         "/api/verspakketten/{id}",
         "/api/verspakketten/import",
         "/api/verspakketten/{id}/beoordelingen",
+        "/api/verspakketten/{id}/beoordelingen/{beoordelingId}",
         "/api/background-commands/{id}"
     ];
 
@@ -145,9 +146,22 @@ public class OpenApiDocumentationTests(LutraApiFactory factory) : IntegrationTes
         HasResponse(update, "400").Should().BeTrue();
         HasResponse(update, "404").Should().BeTrue();
 
+        var remove = paths.GetProperty("/api/verspakketten/{id}").GetProperty("delete").GetProperty("responses");
+        HasResponse(remove, "204").Should().BeTrue();
+        HasResponse(remove, "404").Should().BeTrue();
+
         var beoordeling = paths.GetProperty("/api/verspakketten/{id}/beoordelingen").GetProperty("post").GetProperty("responses");
         RefersTo(beoordeling, "201", "AddBeoordelingResponse").Should().BeTrue();
         HasResponse(beoordeling, "404").Should().BeTrue();
+
+        var removeBeoordeling = paths.GetProperty("/api/verspakketten/{id}/beoordelingen/{beoordelingId}").GetProperty("delete").GetProperty("responses");
+        HasResponse(removeBeoordeling, "204").Should().BeTrue();
+        HasResponse(removeBeoordeling, "404").Should().BeTrue();
+
+        var updateBeoordeling = paths.GetProperty("/api/verspakketten/{id}/beoordelingen/{beoordelingId}").GetProperty("put").GetProperty("responses");
+        HasResponse(updateBeoordeling, "204").Should().BeTrue();
+        HasResponse(updateBeoordeling, "400").Should().BeTrue();
+        HasResponse(updateBeoordeling, "404").Should().BeTrue();
     }
 
     [Fact]
@@ -180,6 +194,11 @@ public class OpenApiDocumentationTests(LutraApiFactory factory) : IntegrationTes
         var create = paths.GetProperty("/api/supermarkten").GetProperty("post").GetProperty("responses");
         RefersTo(create, "201", "CreateSupermarktResponse").Should().BeTrue();
         HasResponse(create, "400").Should().BeTrue();
+
+        var remove = paths.GetProperty("/api/supermarkten/{id}").GetProperty("delete").GetProperty("responses");
+        HasResponse(remove, "204").Should().BeTrue();
+        HasResponse(remove, "404").Should().BeTrue();
+        HasResponse(remove, "409").Should().BeTrue();
     }
 
     private static bool IsOperation(JsonProperty operation) =>

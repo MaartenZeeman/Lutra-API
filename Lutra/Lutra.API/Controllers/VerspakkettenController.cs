@@ -123,6 +123,27 @@ public class VerspakkettenController(IMediator mediator) : ControllerBase
     }
 
     /// <summary>
+    /// Removes an existing verspakket together with its beoordelingen, fotos, ingredienten,
+    /// voedingswaarden and allergenen.
+    /// </summary>
+    /// <param name="id">The verspakket identifier.</param>
+    /// <param name="cancellationToken">Cancellation token for the request.</param>
+    /// <returns>
+    /// Returns 204 No Content when the removal succeeds.
+    /// Returns 404 Not Found when the specified verspakket does not exist.
+    /// </returns>
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken = default)
+    {
+        await mediator.SendCommandAsync<DeleteVerspakket.Command, DeleteVerspakket.Response>(
+            new DeleteVerspakket.Command(id), cancellationToken);
+
+        return NoContent();
+    }
+
+    /// <summary>
     /// Queues a verspakket import from a retailer product page. The import runs in the background
     /// and can be monitored through the background command status endpoint.
     /// </summary>
@@ -163,6 +184,51 @@ public class VerspakkettenController(IMediator mediator) : ControllerBase
         var result = await mediator.SendCommandAsync<AddBeoordeling.Command, AddBeoordeling.Response>(command, cancellationToken);
 
         return CreatedAtAction(nameof(GetById), new { id }, result);
+    }
+
+    /// <summary>
+    /// Updates an existing beoordeling of a verspakket.
+    /// </summary>
+    /// <param name="id">The verspakket ID.</param>
+    /// <param name="beoordelingId">The beoordeling ID.</param>
+    /// <param name="request">The updated beoordeling values.</param>
+    /// <param name="cancellationToken">Cancellation token for the request.</param>
+    /// <returns>
+    /// Returns 204 No Content when the update succeeds.
+    /// Returns 400 Bad Request when the values are invalid.
+    /// Returns 404 Not Found when the beoordeling does not belong to the verspakket.
+    /// </returns>
+    [HttpPut("{id:guid}/beoordelingen/{beoordelingId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateBeoordeling(Guid id, Guid beoordelingId, [FromBody] AddBeoordelingRequest request, CancellationToken cancellationToken = default)
+    {
+        var command = new UpdateBeoordeling.Command(id, beoordelingId, request.CijferSmaak, request.CijferBereiden, request.Aanbevolen, request.Tekst);
+        await mediator.SendCommandAsync<UpdateBeoordeling.Command, UpdateBeoordeling.Response>(command, cancellationToken);
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Removes a beoordeling from an existing verspakket.
+    /// </summary>
+    /// <param name="id">The verspakket ID.</param>
+    /// <param name="beoordelingId">The beoordeling ID.</param>
+    /// <param name="cancellationToken">Cancellation token for the request.</param>
+    /// <returns>
+    /// Returns 204 No Content when the removal succeeds.
+    /// Returns 404 Not Found when the beoordeling does not belong to the verspakket.
+    /// </returns>
+    [HttpDelete("{id:guid}/beoordelingen/{beoordelingId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteBeoordeling(Guid id, Guid beoordelingId, CancellationToken cancellationToken = default)
+    {
+        await mediator.SendCommandAsync<DeleteBeoordeling.Command, DeleteBeoordeling.Response>(
+            new DeleteBeoordeling.Command(id, beoordelingId), cancellationToken);
+
+        return NoContent();
     }
 
     private static Beoordeling? MapBeoordeling(AddBeoordelingRequest? request) =>
