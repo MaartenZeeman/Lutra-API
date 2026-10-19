@@ -1,5 +1,9 @@
 # Changelog
 
+## 19 October 2026
+
+- Added `.github/workflows/docker-publish.yml`, which builds `Lutra/Lutra.API/Dockerfile` for `linux/arm64` (Raspberry Pi) on a native arm64 runner and pushes the image to the GitHub Container Registry as `ghcr.io/<owner>/<repo>`. The image is tagged per branch, tag, semver, commit SHA, and `latest` on the default branch, authenticates with the built-in `GITHUB_TOKEN`, and uses the GitHub Actions build cache.
+
 ## 18 October 2026
 
 - Added removal endpoints that soft-delete content: `DELETE /api/supermarkten/{id}` (returns `409 Conflict` while the supermarket still has verspakketten), `DELETE /api/verspakketten/{id}` (also soft-deletes the beoordelingen, fotos, ingredienten, voedingswaarden and allergenen and clears `bronUrl` so the source URL can be imported again), and `DELETE /api/verspakketten/{id}/beoordelingen/{beoordelingId}`. All three return `204 No Content`, `404 Not Found` for an unknown or already removed identifier.
